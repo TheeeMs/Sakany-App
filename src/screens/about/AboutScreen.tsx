@@ -5,7 +5,7 @@ export default function AboutScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>About Sakany</Text>
       <Text style={styles.description}>
-        Your trusted app for finding the perfect home.
+        Your  app for finding the perfect home.
       </Text>
     </View>
   );
