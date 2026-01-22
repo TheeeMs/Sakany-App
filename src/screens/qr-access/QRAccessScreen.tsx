@@ -35,15 +35,22 @@ export default function QRAccessScreen() {
       name: "Sarah Johnson",
       type: "Visitor",
       usage: "Single use",
-      validUntil: "Dec 15, 2024 6:00 PM",
+      validUntil: "Dec 15, 2026 6:00 PM",
     },
     {
       id: "2",
       name: "Sarah Johnson",
       type: "Visitor",
       usage: "Single use",
-      validUntil: "Dec 15, 2024 6:00 PM",
+      validUntil: "Dec 15, 2026 6:00 PM",
     },
+    {
+       id: "3",
+      name: "Mohamed Saeed",
+      type: "Visitor",
+      usage: "Single use",
+      validUntil: "Dec 15, 2026 6:00 PM",
+    }
   ];
 
   // Visitor Type Icons
@@ -108,7 +115,7 @@ export default function QRAccessScreen() {
           <Text className="text-sm text-gray-500 mb-3">Visitor Type</Text>
 
           {/* Visitor Type Buttons */}
-          <View className="flex-row justify-between mb-5">
+          <View className="flex-row justify-around mb-5">
             {visitorTypes.map((item) => (
               <VisitorTypeButton
                 key={item.type}
@@ -124,8 +131,8 @@ export default function QRAccessScreen() {
             ))}
           </View>
 
-          {/* Pass Type Tabs */}
-          <View className="flex-row mb-5 border-b border-gray-200">
+          {/* Pass Type Buttons */}
+          <View className="flex-row mb-5">
             <PassTypeTab
               label="One-time"
               isSelected={selectedPassType === "one-time"}
@@ -209,4 +216,4 @@ export default function QRAccessScreen() {
     </View>
   );
 }
- 1
+1;
