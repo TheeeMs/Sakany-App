@@ -15,7 +15,7 @@ export default function AppNavigator() {
       <Stack.Screen
         name="Home"
         component={HomeScreen}
-        options={{ title: "Sakany" }}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="About"

@@ -25,7 +25,11 @@ export default function BannerCard({ banner }: BannerCardProps) {
     >
       {banner.image ? (
         <ImageBackground
-          source={{ uri: banner.image }}
+          source={
+            typeof banner.image === "string"
+              ? { uri: banner.image }
+              : banner.image
+          }
           className="flex-1 justify-end"
           resizeMode="cover"
         >
@@ -40,7 +44,7 @@ export default function BannerCard({ banner }: BannerCardProps) {
               {banner.description}
             </Text>
             {banner.buttonText && (
-              <View className="self-start bg-white px-4 py-2 rounded-lg">
+              <View className="self-end bg-white px-4 py-2 rounded-lg">
                 <Text className="text-gray-900 text-xs font-semibold">
                   {banner.buttonText}
                 </Text>
@@ -60,7 +64,7 @@ export default function BannerCard({ banner }: BannerCardProps) {
             {banner.description}
           </Text>
           {banner.buttonText && (
-            <View className="self-start bg-white px-4 py-2 rounded-lg">
+            <View className="self-end bg-white px-4 py-2 rounded-lg">
               <Text className="text-gray-900 text-xs font-semibold">
                 {banner.buttonText}
               </Text>

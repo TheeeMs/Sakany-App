@@ -1,6 +1,8 @@
 import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
+
 import type { UserInfo } from "../types";
 
 interface HomeHeaderProps {
@@ -18,8 +20,12 @@ export default function HomeHeader({
     <View className="bg-[#0D9488] px-5 pt-12 pb-6 rounded-b-[30px]">
       <View className="flex-row items-center justify-between mb-4">
         {/* Profile Icon */}
-        <View className="w-12 h-12 bg-white/20 rounded-full items-center justify-center">
-          <Ionicons name="person" size={24} color="white" />
+        <View className="w-12 h-12 bg-[#0D9488] rounded-full items-center justify-center">
+          <Image
+            source={require("../../../../assets/MainIcon.svg")}
+            style={{ width: 32, height: 32 }}
+            contentFit="contain"
+          />
         </View>
 
         {/* Notification Icon */}

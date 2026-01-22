@@ -24,7 +24,7 @@ export interface Banner {
   id: string;
   title: string;
   description: string;
-  image?: string;
+  image?: string | number; // string for URI, number for require()
   buttonText?: string;
   onPress?: () => void;
 }

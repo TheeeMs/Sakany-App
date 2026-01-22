@@ -1,12 +1,14 @@
 import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import { Ionicons, MaterialCommunityIcons, Feather } from "@expo/vector-icons";
+import Octicons from "@expo/vector-icons/Octicons";
 
 interface QuickActionButtonProps {
   label: string;
   icon: string;
-  iconFamily: "Ionicons" | "MaterialCommunityIcons" | "Feather";
+  iconFamily: "Ionicons" | "MaterialCommunityIcons" | "Feather" | "Octicons";
   backgroundColor: string;
+  iconColor: string;
   onPress: () => void;
 }
 
@@ -15,10 +17,11 @@ export default function QuickActionButton({
   icon,
   iconFamily,
   backgroundColor,
+  iconColor,
   onPress,
 }: QuickActionButtonProps) {
   const renderIcon = () => {
-    const iconProps = { size: 28, color: "#FFFFFF" };
+    const iconProps = { size: 34, color: iconColor };
 
     switch (iconFamily) {
       case "Ionicons":
@@ -27,6 +30,8 @@ export default function QuickActionButton({
         return <MaterialCommunityIcons name={icon as any} {...iconProps} />;
       case "Feather":
         return <Feather name={icon as any} {...iconProps} />;
+      case "Octicons":
+        return <Octicons name={icon as any} {...iconProps} />;
       default:
         return <Ionicons name="help-circle-outline" {...iconProps} />;
     }
