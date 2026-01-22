@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../../navigation";
@@ -9,41 +9,18 @@ export default function HomeScreen() {
   const navigation = useNavigation<NavigationProp>();
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Welcome to Sakany! 🏠</Text>
+    <View className="flex-1 justify-center items-center bg-white">
+      <Text className="text-[28px] font-bold text-[#333] mb-[30px]">
+        Welcome to Sakany! 🏠
+      </Text>
 
       <TouchableOpacity
-        style={styles.button}
+        className="bg-black px-[30px] py-[15px] rounded-[10px]"
         onPress={() => navigation.navigate("About")}
       >
-        <Text style={styles.buttonText}>About Us</Text>
+        <Text className="text-white text-base font-semibold">About Us</Text>
       </TouchableOpacity>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#fff",
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 30,
-  },
-  button: {
-    backgroundColor: "#007AFF",
-    paddingHorizontal: 30,
-    paddingVertical: 15,
-    borderRadius: 10,
-  },
-  buttonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-});
