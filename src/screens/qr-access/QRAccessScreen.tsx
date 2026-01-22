@@ -14,7 +14,12 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import type { VisitorType, PassType, ActivePass } from "./types";
 
 // Components
-import { VisitorTypeButton, PassTypeTab, ActivePassCard } from "./components";
+import {
+  VisitorTypeButton,
+  PassTypeTab,
+  ActivePassCard,
+  DateTimeInput,
+} from "./components";
 
 export default function QRAccessScreen() {
   const navigation = useNavigation();
@@ -25,8 +30,8 @@ export default function QRAccessScreen() {
   const [selectedPassType, setSelectedPassType] =
     useState<PassType>("one-time");
   const [visitorName, setVisitorName] = useState("");
-  const [date, setDate] = useState("");
-  const [time, setTime] = useState("");
+  const [date, setDate] = useState<Date | null>(null);
+  const [time, setTime] = useState<Date | null>(null);
 
   // Sample Active Passes Data
   const activePasses: ActivePass[] = [
@@ -45,12 +50,12 @@ export default function QRAccessScreen() {
       validUntil: "Dec 15, 2026 6:00 PM",
     },
     {
-       id: "3",
+      id: "3",
       name: "Mohamed Saeed",
       type: "Visitor",
       usage: "Single use",
       validUntil: "Dec 15, 2026 6:00 PM",
-    }
+    },
   ];
 
   // Visitor Type Icons
@@ -169,20 +174,12 @@ export default function QRAccessScreen() {
             </View>
 
             {/* Date and Time Inputs */}
-            <View className="flex-row">
-              <TouchableOpacity className="flex-1 flex-row items-center border border-gray-200 rounded-xl px-4 py-3 mr-2">
-                <Ionicons name="calendar-outline" size={20} color="#9CA3AF" />
-                <Text className="ml-3 text-base text-gray-400">
-                  {date || "mm/dd/yyyy"}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity className="flex-1 flex-row items-center border border-gray-200 rounded-xl px-4 py-3">
-                <Ionicons name="time-outline" size={20} color="#9CA3AF" />
-                <Text className="ml-3 text-base text-gray-400">
-                  {time || "- : - -"}
-                </Text>
-              </TouchableOpacity>
-            </View>
+            <DateTimeInput
+              date={date}
+              time={time}
+              onDateChange={setDate}
+              onTimeChange={setTime}
+            />
           </View>
 
           {/* Generate QR Button */}
