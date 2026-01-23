@@ -1,12 +1,18 @@
 import { View, Text, StyleSheet } from "react-native";
+import { AppBottomNav } from "../../components/navigation";
 
 export default function AboutScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>About Sakany</Text>
-      <Text style={styles.description}>
-        Your  app for finding the perfect home.
-      </Text>
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <Text style={styles.title}>About Sakany</Text>
+        <Text style={styles.description}>
+          Your app for finding the perfect home.
+        </Text>
+      </View>
+
+      {/* Bottom Navigation */}
+      <AppBottomNav />
     </View>
   );
 }

@@ -2,7 +2,9 @@ import React from "react";
 import { View, Text, ScrollView, TouchableOpacity } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import type { RootStackParamList } from "../../navigation";
+import type { CompositeNavigationProp } from "@react-navigation/native";
+import type { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
+import type { RootStackParamList, MainTabParamList } from "../../navigation";
 import { Ionicons } from "@expo/vector-icons";
 
 // Types
@@ -16,7 +18,10 @@ import {
   RecentActionCard,
 } from "./components";
 
-type NavigationProp = NativeStackNavigationProp<RootStackParamList, "Home">;
+type NavigationProp = CompositeNavigationProp<
+  BottomTabNavigationProp<MainTabParamList, "Home">,
+  NativeStackNavigationProp<RootStackParamList>
+>;
 
 export default function HomeScreen() {
   const navigation = useNavigation<NavigationProp>();
@@ -43,7 +48,7 @@ export default function HomeScreen() {
       id: "2",
       title: "Join Our Community Event",
       description: "Open Air Cinema this Friday at 8 PM",
-      buttonText: "Learn More",
+      buttonText: "Explore",
       image: require("../../../assets/build.png"),
       onPress: () => console.log("Event banner pressed"),
     },

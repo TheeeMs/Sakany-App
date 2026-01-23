@@ -11,6 +11,7 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons, MaterialCommunityIcons, Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { AppBottomNav } from "../../components/navigation";
 
 // Status Types
 type StatusType = "all" | "Active" | "Used" | "Expired";
@@ -504,6 +505,9 @@ export default function QRHistoryScreen() {
           <EmptyState filter={selectedFilter} />
         )}
       </ScrollView>
+
+      {/* Bottom Navigation */}
+      <AppBottomNav />
     </View>
   );
 }

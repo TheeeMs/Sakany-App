@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { AppBottomNav } from "../../components/navigation";
 
 // Types
 import type { VisitorType, PassType, ActivePass } from "./types";
@@ -445,6 +446,9 @@ Share this code with your visitor for access.
         }}
         pass={selectedPass}
       />
+
+      {/* Bottom Navigation */}
+      <AppBottomNav />
     </View>
   );
 }
