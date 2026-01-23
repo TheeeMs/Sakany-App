@@ -6,6 +6,8 @@ import {
   TextInput,
   ScrollView,
   StatusBar,
+  Alert,
+  Share,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
@@ -19,7 +21,27 @@ import {
   PassTypeTab,
   ActivePassCard,
   DateTimeInput,
+  QRSuccessModal,
+  UsageCountInput,
+  QRViewModal,
 } from "./components";
+
+// Generate unique access code
+const generateAccessCode = (visitorType: VisitorType): string => {
+  const prefix =
+    visitorType === "guest"
+      ? "VIS"
+      : visitorType === "delivery"
+        ? "DEL"
+        : visitorType === "service"
+          ? "SRV"
+          : "FAM";
+  const year = new Date().getFullYear();
+  const random = Math.floor(Math.random() * 1000)
+    .toString()
+    .padStart(3, "0");
+  return `${prefix}-${year}-${random}`;
+};
 
 export default function QRAccessScreen() {
   const navigation = useNavigation();
@@ -32,31 +54,153 @@ export default function QRAccessScreen() {
   const [visitorName, setVisitorName] = useState("");
   const [date, setDate] = useState<Date | null>(null);
   const [time, setTime] = useState<Date | null>(null);
+  const [usageCount, setUsageCount] = useState(2);
+
+  // QR Modal State
+  const [showQRModal, setShowQRModal] = useState(false);
+  const [generatedQRData, setGeneratedQRData] = useState<{
+    visitorType: string;
+    visitorName: string;
+    usageCount: number;
+    date: Date | null;
+    time: Date | null;
+    accessCode: string;
+  } | null>(null);
+
+  // View QR Modal State
+  const [showViewQRModal, setShowViewQRModal] = useState(false);
+  const [selectedPass, setSelectedPass] = useState<ActivePass | null>(null);
 
   // Sample Active Passes Data
-  const activePasses: ActivePass[] = [
+  const [activePasses, setActivePasses] = useState<ActivePass[]>([
     {
       id: "1",
       name: "Sarah Johnson",
       type: "Visitor",
       usage: "Single use",
+      usageCount: 1,
+      accessCode: "VIS-2026-101",
       validUntil: "Dec 15, 2026 6:00 PM",
     },
     {
       id: "2",
-      name: "Sarah Johnson",
-      type: "Visitor",
-      usage: "Single use",
-      validUntil: "Dec 15, 2026 6:00 PM",
+      name: "Ahmed Hassan",
+      type: "Delivery",
+      usage: "Multiple use",
+      usageCount: 3,
+      accessCode: "DEL-2026-205",
+      validUntil: "Dec 20, 2026 2:00 PM",
     },
     {
       id: "3",
       name: "Mohamed Saeed",
-      type: "Visitor",
+      type: "Service",
       usage: "Single use",
-      validUntil: "Dec 15, 2026 6:00 PM",
+      usageCount: 1,
+      accessCode: "SRV-2026-089",
+      validUntil: "Dec 18, 2026 10:00 AM",
     },
-  ];
+  ]);
+
+  // Generate QR Code Handler
+  const handleGenerateQR = () => {
+    // Validation
+    if (!visitorName.trim()) {
+      Alert.alert("Missing Information", "Please enter the visitor name.");
+      return;
+    }
+
+    if (!date) {
+      Alert.alert("Missing Information", "Please select a date.");
+      return;
+    }
+
+    if (!time) {
+      Alert.alert("Missing Information", "Please select a time.");
+      return;
+    }
+
+    // Generate access code
+    const accessCode = generateAccessCode(selectedVisitorType);
+
+    // Set QR data
+    setGeneratedQRData({
+      visitorType: selectedVisitorType,
+      visitorName: visitorName.trim(),
+      usageCount: selectedPassType === "one-time" ? 1 : usageCount,
+      date,
+      time,
+      accessCode,
+    });
+
+    // Show modal
+    setShowQRModal(true);
+  };
+
+  // Handle modal close and add to active passes
+  const handleQRModalClose = () => {
+    if (generatedQRData) {
+      // Format the valid until date
+      const formatValidUntil = () => {
+        if (!generatedQRData.date || !generatedQRData.time) return "";
+        const months = [
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "May",
+          "Jun",
+          "Jul",
+          "Aug",
+          "Sep",
+          "Oct",
+          "Nov",
+          "Dec",
+        ];
+        const d = generatedQRData.date;
+        const t = generatedQRData.time;
+        let hours = t.getHours();
+        const minutes = String(t.getMinutes()).padStart(2, "0");
+        const ampm = hours >= 12 ? "PM" : "AM";
+        hours = hours % 12;
+        hours = hours ? hours : 12;
+        return `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()} ${hours}:${minutes} ${ampm}`;
+      };
+
+      // Map visitor type to display type
+      const typeMap: Record<VisitorType, ActivePass["type"]> = {
+        guest: "Visitor",
+        delivery: "Delivery",
+        service: "Service",
+        family: "Family",
+      };
+
+      // Add new pass to active passes
+      const newPass: ActivePass = {
+        id: Date.now().toString(),
+        name: generatedQRData.visitorName,
+        type: typeMap[generatedQRData.visitorType as VisitorType],
+        usage: generatedQRData.usageCount === 1 ? "Single use" : "Multiple use",
+        usageCount: generatedQRData.usageCount,
+        accessCode: generatedQRData.accessCode,
+        validUntil: formatValidUntil(),
+        validDate: generatedQRData.date || undefined,
+        validTime: generatedQRData.time || undefined,
+      };
+
+      setActivePasses((prev) => [newPass, ...prev]);
+
+      // Reset form
+      setVisitorName("");
+      setDate(null);
+      setTime(null);
+      setUsageCount(2);
+      setSelectedPassType("one-time");
+    }
+
+    setShowQRModal(false);
+    setGeneratedQRData(null);
+  };
 
   // Visitor Type Icons
   const getVisitorIcon = (type: VisitorType, isSelected: boolean) => {
@@ -77,6 +221,54 @@ export default function QRAccessScreen() {
       case "family":
         return <Ionicons name="people-outline" size={24} color={color} />;
     }
+  };
+
+  // Handle View QR for existing pass
+  const handleViewQR = (pass: ActivePass) => {
+    setSelectedPass(pass);
+    setShowViewQRModal(true);
+  };
+
+  // Handle Share for existing pass
+  const handleSharePass = async (pass: ActivePass) => {
+    try {
+      const message = `
+🎫 Access Pass
+
+👤 Visitor: ${pass.name}
+📌 Type: ${pass.type}
+🔢 Access Code: ${pass.accessCode}
+🔄 Usage: ${pass.usage}
+📅 Valid Until: ${pass.validUntil}
+
+Share this code with your visitor for access.
+      `.trim();
+
+      await Share.share({
+        message,
+        title: "Access Pass",
+      });
+    } catch (error) {
+      console.error("Error sharing:", error);
+    }
+  };
+
+  // Handle Delete pass
+  const handleDeletePass = (pass: ActivePass) => {
+    Alert.alert(
+      "Delete Pass",
+      `Are you sure you want to delete the pass for ${pass.name}?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => {
+            setActivePasses((prev) => prev.filter((p) => p.id !== pass.id));
+          },
+        },
+      ],
+    );
   };
 
   // Visitor Types Data
@@ -100,8 +292,13 @@ export default function QRAccessScreen() {
           <Ionicons name="arrow-back" size={24} color="#1F2937" />
         </TouchableOpacity>
         <Text className="text-lg font-semibold text-gray-800">QR Accesses</Text>
-        <TouchableOpacity className="w-10 h-10 items-center justify-center">
-          <Ionicons name="time-outline" size={24} color="#1F2937" />
+        <TouchableOpacity
+          onPress={() => navigation.navigate("QRHistory" as never)}
+          className="w-10 h-10 items-center justify-center rounded-xl"
+          style={{ backgroundColor: "#E6F7F6" }}
+          activeOpacity={0.7}
+        >
+          <MaterialCommunityIcons name="history" size={22} color="#0D9488" />
         </TouchableOpacity>
       </View>
 
@@ -173,6 +370,18 @@ export default function QRAccessScreen() {
               />
             </View>
 
+            {/* Usage Count Input - Only show for Multiple pass type */}
+            {selectedPassType === "multiple" && (
+              <View className="mb-3">
+                <UsageCountInput
+                  value={usageCount}
+                  onChange={setUsageCount}
+                  minValue={2}
+                  maxValue={10}
+                />
+              </View>
+            )}
+
             {/* Date and Time Inputs */}
             <DateTimeInput
               date={date}
@@ -184,6 +393,7 @@ export default function QRAccessScreen() {
 
           {/* Generate QR Button */}
           <TouchableOpacity
+            onPress={handleGenerateQR}
             className="bg-[#0D9488] flex-row items-center justify-center py-4 rounded-xl"
             style={{
               shadowColor: "#0D9488",
@@ -206,11 +416,35 @@ export default function QRAccessScreen() {
             Active Passes
           </Text>
           {activePasses.map((pass) => (
-            <ActivePassCard key={pass.id} pass={pass} />
+            <ActivePassCard
+              key={pass.id}
+              pass={pass}
+              onViewQR={handleViewQR}
+              onShare={handleSharePass}
+              onDelete={handleDeletePass}
+            />
           ))}
         </View>
       </ScrollView>
+
+      {/* QR Success Modal */}
+      {generatedQRData && (
+        <QRSuccessModal
+          visible={showQRModal}
+          onClose={handleQRModalClose}
+          qrData={generatedQRData}
+        />
+      )}
+
+      {/* View QR Modal for Existing Passes */}
+      <QRViewModal
+        visible={showViewQRModal}
+        onClose={() => {
+          setShowViewQRModal(false);
+          setSelectedPass(null);
+        }}
+        pass={selectedPass}
+      />
     </View>
   );
 }
-1;

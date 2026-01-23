@@ -5,9 +5,17 @@ import type { ActivePass } from "../types";
 
 interface ActivePassCardProps {
   pass: ActivePass;
+  onViewQR?: (pass: ActivePass) => void;
+  onShare?: (pass: ActivePass) => void;
+  onDelete?: (pass: ActivePass) => void;
 }
 
-export default function ActivePassCard({ pass }: ActivePassCardProps) {
+export default function ActivePassCard({
+  pass,
+  onViewQR,
+  onShare,
+  onDelete,
+}: ActivePassCardProps) {
   return (
     <View
       className="bg-white rounded-3xl p-4 mb-4 border border-gray-100"
@@ -76,10 +84,16 @@ export default function ActivePassCard({ pass }: ActivePassCardProps) {
 
           {/* Mini Actions */}
           <View className="flex-row items-center mt-2">
-            <TouchableOpacity className="w-8 h-8 bg-gray-50 rounded-lg items-center justify-center mr-1.5">
+            <TouchableOpacity
+              onPress={() => onShare?.(pass)}
+              className="w-8 h-8 bg-gray-50 rounded-lg items-center justify-center mr-1.5"
+            >
               <Feather name="share-2" size={14} color="#6B7280" />
             </TouchableOpacity>
-            <TouchableOpacity className="w-8 h-8 bg-red-50 rounded-lg items-center justify-center">
+            <TouchableOpacity
+              onPress={() => onDelete?.(pass)}
+              className="w-8 h-8 bg-red-50 rounded-lg items-center justify-center"
+            >
               <Feather name="trash-2" size={14} color="#EF4444" />
             </TouchableOpacity>
           </View>
@@ -88,10 +102,12 @@ export default function ActivePassCard({ pass }: ActivePassCardProps) {
 
       {/* View QR Button - Full Width */}
       <TouchableOpacity
+        onPress={() => onViewQR?.(pass)}
         className="flex-row items-center justify-center py-3 rounded-xl mt-4"
         style={{
           backgroundColor: "#0D9488",
         }}
+        activeOpacity={0.8}
       >
         <MaterialCommunityIcons name="qrcode-scan" size={18} color="white" />
         <Text className="text-white text-sm font-bold ml-2">View QR Code</Text>
