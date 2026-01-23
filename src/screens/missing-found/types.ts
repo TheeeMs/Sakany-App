@@ -12,10 +12,15 @@ export interface MissingFoundItem {
     title: string;
     description: string;
     location: string;
+    locationDetail?: string;
     timeAgo: string;
+    date?: string;
     image: any; // Image source
     ownerName: string;
     ownerPhone: string;
+    ownerUnit?: string;
+    ownerInitials?: string;
+    isVerified?: boolean;
     reward?: string;
     isResolved?: boolean;
 }

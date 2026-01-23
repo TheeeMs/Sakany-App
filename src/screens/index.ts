@@ -10,6 +10,7 @@ export { default as QRHistoryScreen } from "./qr-access/QRHistoryScreen";
 
 // Missing & Found
 export { default as MissingFoundScreen } from "./missing-found/MissingFoundScreen";
+export { default as ReportDetailsScreen } from "./missing-found/ReportDetailsScreen";
 
 // Maintenance
 export { default as MaintenanceScreen } from "./maintenance/MaintenanceScreen";

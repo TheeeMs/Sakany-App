@@ -8,6 +8,8 @@ import {
   Alert,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { RootStackParamList } from "../../navigation";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -17,8 +19,10 @@ import type { TabType, MissingFoundItem } from "./types";
 // Components
 import { TabSwitch, MissingItemCard } from "./components";
 
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
 export default function MissingFoundScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp>();
   const insets = useSafeAreaInsets();
 
   // State
@@ -30,14 +34,18 @@ export default function MissingFoundScreen() {
       id: "1",
       type: "missing",
       category: "pet",
-      title: "Tabby Cat - 'Luna'",
+      title: "Blue Trek Mountain Bike",
       description:
-        "Green eyes, wearing a black collar.Green eyes, wearing a black collar.Green",
-      location: "Block B Garage",
-      timeAgo: "2h ago",
+        "Blue Trek mountain bike with silver handlebars. She responds to her name but might be hiding under parked cars or bushes as she gets scared easily by loud noises. If found, please hold her gently, she does not scratch.",
+      location: "Building A Bike Rack",
+      locationDetail: "Near the north entrance gate",
+      date: "Dec 22, 2024",
+      timeAgo: "1d ago",
       image: require("../../../assets/build.png"),
-      ownerName: "Ahmed Hassan",
+      ownerName: "Sarah Jenkins",
       ownerPhone: "+201234567890",
+      ownerUnit: "Unit 205",
+      isVerified: true,
     },
     {
       id: "2",
@@ -45,25 +53,33 @@ export default function MissingFoundScreen() {
       category: "pet",
       title: "Tabby Cat - 'Luna'",
       description:
-        "Green eyes, wearing a black collar.Green eyes, wearing a black collar.Green",
+        "Green eyes, wearing a black collar with a bell. Very friendly and loves treats.",
       location: "Block B Garage",
-      timeAgo: "2h ago",
+      locationDetail: "Underground parking level 2",
+      date: "Dec 21, 2024",
+      timeAgo: "2d ago",
       image: require("../../../assets/build.png"),
-      ownerName: "Sara Ahmed",
+      ownerName: "Ahmed Hassan",
       ownerPhone: "+201234567891",
+      ownerUnit: "Unit 312",
+      isVerified: true,
     },
     {
       id: "3",
       type: "missing",
-      category: "pet",
-      title: "Tabby Cat - 'Luna'",
+      category: "item",
+      title: "Silver MacBook Pro",
       description:
-        "Green eyes, wearing a black collar.Green eyes, wearing a black collar.Green",
-      location: "Block B Garage",
-      timeAgo: "2h ago",
+        "15-inch MacBook Pro with stickers on the cover. Last seen at the coffee shop.",
+      location: "Community Center",
+      locationDetail: "Coffee shop area",
+      date: "Dec 20, 2024",
+      timeAgo: "3d ago",
       image: require("../../../assets/build.png"),
       ownerName: "Mohamed Ali",
       ownerPhone: "+201234567892",
+      ownerUnit: "Unit 118",
+      isVerified: false,
     },
   ];
 
@@ -73,25 +89,35 @@ export default function MissingFoundScreen() {
       id: "4",
       type: "found",
       category: "item",
-      title: "Black Wallet",
-      description: "Found near the main entrance. Contains some cards.",
+      title: "Black Leather Wallet",
+      description:
+        "Found near the main entrance. Contains some cards and cash. Please describe contents to claim.",
       location: "Building A Lobby",
+      locationDetail: "Reception desk",
+      date: "Dec 22, 2024",
       timeAgo: "1h ago",
       image: require("../../../assets/build.png"),
       ownerName: "Security Office",
       ownerPhone: "+201234567893",
+      ownerUnit: "Security",
+      isVerified: true,
     },
     {
       id: "5",
       type: "found",
       category: "pet",
       title: "Golden Retriever",
-      description: "Friendly dog found wandering. No collar.",
-      location: "Garden Area",
+      description:
+        "Friendly dog found wandering in the garden. No collar but very well trained.",
+      location: "Central Garden",
+      locationDetail: "Near the fountain",
+      date: "Dec 21, 2024",
       timeAgo: "3h ago",
       image: require("../../../assets/build.png"),
       ownerName: "Guard Station",
       ownerPhone: "+201234567894",
+      ownerUnit: "Gate 1",
+      isVerified: true,
     },
   ];
 
@@ -100,11 +126,7 @@ export default function MissingFoundScreen() {
 
   // Handle Details Press
   const handleDetailsPress = (item: MissingFoundItem) => {
-    Alert.alert(
-      item.title,
-      `Owner: ${item.ownerName}\nPhone: ${item.ownerPhone}\nLocation: ${item.location}\n\n${item.description}`,
-      [{ text: "Close", style: "cancel" }],
-    );
+    navigation.navigate("ReportDetails", { item });
   };
 
   // Handle Filter Press
