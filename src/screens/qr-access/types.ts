@@ -10,5 +10,10 @@ export interface ActivePass {
     name: string;
     type: "Visitor" | "Delivery" | "Service" | "Family";
     usage: "Single use" | "Multiple use";
+    usageCount: number;
     validUntil: string;
+    accessCode: string;
+    validDate?: Date;
+    validTime?: Date;
 }
+
