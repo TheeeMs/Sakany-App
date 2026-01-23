@@ -90,7 +90,7 @@ export default function HomeScreen() {
       iconFamily: "Ionicons" as const,
       backgroundColor: "#FECACA",
       iconColor: "#DC2626",
-      onPress: () => console.log("Missing pressed"),
+      onPress: () => navigation.navigate("MissingFound"),
     },
     {
       id: "3",
