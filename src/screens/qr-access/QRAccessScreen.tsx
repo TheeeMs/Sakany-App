@@ -294,9 +294,11 @@ Share this code with your visitor for access.
         <Text className="text-lg font-semibold text-gray-800">QR Accesses</Text>
         <TouchableOpacity
           onPress={() => navigation.navigate("QRHistory" as never)}
-          className="w-10 h-10 items-center justify-center"
+          className="w-10 h-10 items-center justify-center rounded-xl"
+          style={{ backgroundColor: "#E6F7F6" }}
+          activeOpacity={0.7}
         >
-          <Ionicons name="reader-outline" size={24} color="#1F2937" />
+          <MaterialCommunityIcons name="history" size={22} color="#0D9488" />
         </TouchableOpacity>
       </View>
 
