@@ -17,7 +17,6 @@ import {
   QuickActionButton,
   RecentActionCard,
 } from "./components";
-import { AppBottomNav } from "../../components/navigation";
 
 type NavigationProp = CompositeNavigationProp<
   BottomTabNavigationProp<MainTabParamList, "Home">,
@@ -183,9 +182,6 @@ export default function HomeScreen() {
           ))}
         </View>
       </ScrollView>
-
-      {/* Bottom Navigation */}
-      <AppBottomNav />
     </View>
   );
 }

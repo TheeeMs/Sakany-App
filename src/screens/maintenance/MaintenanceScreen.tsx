@@ -1,5 +1,4 @@
 import { View, Text, ScrollView } from "react-native";
-import { AppBottomNav } from "../../components/navigation";
 
 export default function MaintenanceScreen() {
   return (
@@ -12,9 +11,6 @@ export default function MaintenanceScreen() {
           </Text>
         </View>
       </ScrollView>
-
-      {/* Bottom Navigation */}
-      <AppBottomNav />
     </View>
   );
 }

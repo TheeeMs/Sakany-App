@@ -1,5 +1,4 @@
 import { View, Text, ScrollView } from "react-native";
-import { AppBottomNav } from "../../components/navigation";
 
 export default function ProfileScreen() {
   return (
@@ -12,9 +11,6 @@ export default function ProfileScreen() {
           </Text>
         </View>
       </ScrollView>
-
-      {/* Bottom Navigation */}
-      <AppBottomNav />
     </View>
   );
 }

@@ -55,10 +55,8 @@ export default function AppBottomNav() {
 
         const onPress = () => {
           if (!isFocused) {
-            navigation.navigate(
-              tab.route as never,
-              { screen: tab.name } as never,
-            );
+            // @ts-ignore - Navigation typing is complex with nested navigators
+            navigation.navigate(tab.route, { screen: tab.name });
           }
         };
 
