@@ -48,7 +48,7 @@ export default function AppBottomNav() {
   const route = useRoute();
 
   return (
-    <View className="flex-row bg-white border-t border-gray-200 pb-1 pt-1">
+    <View className="flex-row bg-white border-t border-gray-200 pb-1 pt-1 rounded-t-3xl shadow-lg">
       {TABS.map((tab) => {
         const isFocused = route.name === tab.name;
         const iconName = isFocused ? tab.activeIcon : tab.icon;

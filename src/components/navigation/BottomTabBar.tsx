@@ -44,7 +44,7 @@ export default function BottomTabBar({
   navigation,
 }: BottomTabBarProps) {
   return (
-    <View className="flex-row bg-white border-t border-gray-200 pb-1 pt-1">
+    <View className="flex-row bg-white border-t border-gray-200 pb-1 pt-1 rounded-t-3xl shadow-lg">
       {state.routes.map((route, index) => {
         const { options } = descriptors[route.key];
         const isFocused = state.index === index;
