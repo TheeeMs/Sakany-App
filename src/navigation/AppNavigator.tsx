@@ -5,6 +5,7 @@ import {
   AboutScreen,
   QRAccessScreen,
   QRHistoryScreen,
+  MissingFoundScreen,
   MaintenanceScreen,
   PaymentScreen,
   ProfileScreen,
@@ -16,6 +17,7 @@ export type RootStackParamList = {
   About: undefined;
   QRAccess: undefined;
   QRHistory: undefined;
+  MissingFound: undefined;
 };
 
 export type MainTabParamList = {
@@ -65,6 +67,11 @@ export default function AppNavigator() {
       <Stack.Screen
         name="QRHistory"
         component={QRHistoryScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="MissingFound"
+        component={MissingFoundScreen}
         options={{ headerShown: false }}
       />
     </Stack.Navigator>

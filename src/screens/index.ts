@@ -8,6 +8,9 @@ export { default as AboutScreen } from "./about/AboutScreen";
 export { default as QRAccessScreen } from "./qr-access/QRAccessScreen";
 export { default as QRHistoryScreen } from "./qr-access/QRHistoryScreen";
 
+// Missing & Found
+export { default as MissingFoundScreen } from "./missing-found/MissingFoundScreen";
+
 // Maintenance
 export { default as MaintenanceScreen } from "./maintenance/MaintenanceScreen";
 
@@ -16,3 +19,4 @@ export { default as PaymentScreen } from "./payment/PaymentScreen";
 
 // Profile
 export { default as ProfileScreen } from "./profile/ProfileScreen";
+
