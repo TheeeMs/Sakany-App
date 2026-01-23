@@ -1,6 +1,8 @@
-import { View, Text, TouchableOpacity } from "react-native";
+import { View, Text, Pressable } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type TabIconName = keyof typeof Ionicons.glyphMap;
 
@@ -23,15 +25,15 @@ const TABS: TabItem[] = [
   {
     name: "Maintenance",
     route: "Main",
-    icon: "construct-outline",
-    activeIcon: "construct",
-    label: "Maintenance",
+    icon: "build-outline",
+    activeIcon: "build",
+    label: "Service",
   },
   {
     name: "Payment",
     route: "Main",
-    icon: "card-outline",
-    activeIcon: "card",
+    icon: "wallet-outline",
+    activeIcon: "wallet",
     label: "Payment",
   },
   {
@@ -46,41 +48,103 @@ const TABS: TabItem[] = [
 export default function AppBottomNav() {
   const navigation = useNavigation();
   const route = useRoute();
+  const insets = useSafeAreaInsets();
 
   return (
-    <View className="flex-row bg-white border-t border-gray-200 pb-1 pt-1 rounded-t-3xl shadow-lg">
-      {TABS.map((tab) => {
-        const isFocused = route.name === tab.name;
-        const iconName = isFocused ? tab.activeIcon : tab.icon;
+    <View
+      style={{
+        backgroundColor: "#FFFFFF",
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+        paddingBottom: insets.bottom,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: -4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 12,
+        elevation: 20,
+      }}
+    >
+      <View
+        style={{
+          flexDirection: "row",
+          paddingTop: 8,
+          paddingBottom: 8,
+        }}
+      >
+        {TABS.map((tab) => {
+          const isFocused = route.name === tab.name;
+          const iconName = isFocused ? tab.activeIcon : tab.icon;
 
-        const onPress = () => {
-          if (!isFocused) {
-            // @ts-ignore - Navigation typing is complex with nested navigators
-            navigation.navigate(tab.route, { screen: tab.name });
-          }
-        };
+          const onPress = () => {
+            if (!isFocused) {
+              // @ts-ignore - Navigation typing is complex with nested navigators
+              navigation.navigate(tab.route, { screen: tab.name });
+            }
+          };
 
-        return (
-          <TouchableOpacity
-            key={tab.name}
-            onPress={onPress}
-            className="flex-1 items-center justify-center py-1"
-          >
-            <Ionicons
-              name={iconName}
-              size={22}
-              color={isFocused ? "#14B8A6" : "#9CA3AF"}
-            />
-            <Text
-              className={`mt-0.5 text-[10px] ${
-                isFocused ? "text-teal-500 font-medium" : "text-gray-400"
-              }`}
+          return (
+            <Pressable
+              key={tab.name}
+              onPress={onPress}
+              style={{
+                flex: 1,
+                alignItems: "center",
+                justifyContent: "center",
+                paddingVertical: 6,
+              }}
             >
-              {tab.label}
-            </Text>
-          </TouchableOpacity>
-        );
-      })}
+              <View style={{ alignItems: "center" }}>
+                {/* Icon Container */}
+                {isFocused ? (
+                  <LinearGradient
+                    colors={["#14B8A6", "#0D9488"]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 18,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      shadowColor: "#14B8A6",
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.25,
+                      shadowRadius: 4,
+                      elevation: 4,
+                    }}
+                  >
+                    <Ionicons name={iconName} size={18} color="#FFFFFF" />
+                  </LinearGradient>
+                ) : (
+                  <View
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 18,
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Ionicons name={iconName} size={18} color="#94A3B8" />
+                  </View>
+                )}
+
+                {/* Label */}
+                <Text
+                  style={{
+                    marginTop: 2,
+                    fontSize: 10,
+                    fontWeight: isFocused ? "600" : "400",
+                    color: isFocused ? "#14B8A6" : "#94A3B8",
+                  }}
+                >
+                  {tab.label}
+                </Text>
+              </View>
+            </Pressable>
+          );
+        })}
+      </View>
     </View>
   );
 }
