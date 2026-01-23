@@ -292,8 +292,11 @@ Share this code with your visitor for access.
           <Ionicons name="arrow-back" size={24} color="#1F2937" />
         </TouchableOpacity>
         <Text className="text-lg font-semibold text-gray-800">QR Accesses</Text>
-        <TouchableOpacity className="w-10 h-10 items-center justify-center">
-          <Ionicons name="time-outline" size={24} color="#1F2937" />
+        <TouchableOpacity
+          onPress={() => navigation.navigate("QRHistory" as never)}
+          className="w-10 h-10 items-center justify-center"
+        >
+          <Ionicons name="reader-outline" size={24} color="#1F2937" />
         </TouchableOpacity>
       </View>
 
