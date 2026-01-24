@@ -55,16 +55,17 @@ export default function RequestDetailsScreen() {
     <View className="flex-1 bg-white">
       {/* Header */}
       <View className="px-4 pt-12 pb-4 border-b border-gray-100">
-        <View className="flex-row items-center">
+        <View className="flex-row items-center justify-between">
           <TouchableOpacity
             onPress={() => navigation.goBack()}
-            className="w-10 h-10 items-center justify-center mr-3"
+            className="w-10 h-10 items-center justify-center"
           >
             <Ionicons name="arrow-back" size={24} color="#1F2937" />
           </TouchableOpacity>
           <Text className="text-xl font-semibold text-gray-800">
             {categoryTitle}
           </Text>
+          <View className="w-10" />
         </View>
       </View>
 
