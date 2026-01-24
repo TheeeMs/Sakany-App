@@ -9,7 +9,7 @@ export type CategoryType =
   | "Housekeeping"
   | "Painting"
   | "Carpentry"
-  | "Masonry"
+  | "Garden"
   | "Aluminum"
   | "Other";
 

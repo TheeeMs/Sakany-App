@@ -15,13 +15,13 @@ export default function LocationTab({
   return (
     <TouchableOpacity
       onPress={onPress}
-      className={`flex-1 py-2 px-4 rounded-full ${
-        isSelected ? "bg-teal-500" : "bg-gray-100"
+      className={`flex-1 py-3 px-4 rounded-full ${
+        isSelected ? "bg-teal-500" : "bg-white border border-gray-200"
       }`}
       activeOpacity={0.7}
     >
       <Text
-        className={`text-center text-sm font-medium ${
+        className={`text-center text-sm font-semibold ${
           isSelected ? "text-white" : "text-gray-600"
         }`}
       >
