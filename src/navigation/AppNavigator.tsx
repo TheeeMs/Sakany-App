@@ -8,6 +8,8 @@ import {
   MissingFoundScreen,
   ReportDetailsScreen,
   MaintenanceScreen,
+  RequestDetailsScreen,
+  MaintenanceHistoryScreen,
   PaymentScreen,
   ProfileScreen,
 } from "../screens";
@@ -21,6 +23,8 @@ export type RootStackParamList = {
   QRHistory: undefined;
   MissingFound: undefined;
   ReportDetails: { item: MissingFoundItem };
+  RequestDetails: { category: string };
+  MaintenanceHistory: undefined;
 };
 
 export type MainTabParamList = {
@@ -80,6 +84,16 @@ export default function AppNavigator() {
       <Stack.Screen
         name="ReportDetails"
         component={ReportDetailsScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="RequestDetails"
+        component={RequestDetailsScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="MaintenanceHistory"
+        component={MaintenanceHistoryScreen}
         options={{ headerShown: false }}
       />
     </Stack.Navigator>

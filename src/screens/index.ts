@@ -14,10 +14,11 @@ export { default as ReportDetailsScreen } from "./missing-found/ReportDetailsScr
 
 // Maintenance
 export { default as MaintenanceScreen } from "./maintenance/MaintenanceScreen";
+export { default as RequestDetailsScreen } from "./maintenance/RequestDetailsScreen";
+export { default as MaintenanceHistoryScreen } from "./maintenance/MaintenanceHistoryScreen";
 
 // Payment
 export { default as PaymentScreen } from "./payment/PaymentScreen";
 
 // Profile
 export { default as ProfileScreen } from "./profile/ProfileScreen";
-
