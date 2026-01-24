@@ -188,7 +188,13 @@ export default function MaintenanceScreen() {
             <Text className="text-lg font-bold text-gray-900">
               Active Maintenance
             </Text>
-            <TouchableOpacity onPress={handleHistoryPress}>
+            <TouchableOpacity
+              onPress={handleHistoryPress}
+              className="flex-row items-center"
+            >
+              <Text className="text-sm font-semibold text-[#0D9488] mr-1">
+                View all
+              </Text>
               <Ionicons name="chevron-forward" size={20} color="#0D9488" />
             </TouchableOpacity>
           </View>
