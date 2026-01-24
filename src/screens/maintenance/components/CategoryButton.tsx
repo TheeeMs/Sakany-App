@@ -13,7 +13,14 @@ export default function CategoryButton({
 }: CategoryButtonProps) {
   const getIconComponent = () => {
     if (category.icon.startsWith("air")) return Entypo;
-    if (category.icon.startsWith("wrench") || category.icon.startsWith("hammer") || category.icon.startsWith("snow") || category.icon.startsWith("water") || category.icon.startsWith("flash")) return Ionicons;
+    if (
+      category.icon.startsWith("wrench") ||
+      category.icon.startsWith("hammer") ||
+      category.icon.startsWith("snow") ||
+      category.icon.startsWith("water") ||
+      category.icon.startsWith("flash")
+    )
+      return Ionicons;
     return MaterialCommunityIcons;
   };
 
@@ -31,10 +38,10 @@ export default function CategoryButton({
       >
         <IconComponent
           name={category.icon as any}
-          size={36}
+          size={28}
           color={category.iconColor}
         />
-        <Text className="text-xs text-[#0D9488] text-center font-medium mt-2">
+        <Text className="text-sm text-[#0D9488] text-center font-medium mt-2">
           {category.name}
         </Text>
       </View>
