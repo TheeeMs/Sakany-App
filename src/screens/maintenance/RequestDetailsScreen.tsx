@@ -73,17 +73,21 @@ export default function RequestDetailsScreen() {
         className="flex-1 px-4 pt-6"
         showsVerticalScrollIndicator={false}
       >
-        {/* Title Input */}
-        <View className="mb-6">
-          <Text className="text-sm font-medium text-gray-700 mb-2">Title</Text>
-          <TextInput
-            value={title}
-            onChangeText={setTitle}
-            placeholder="Brief description of the issue"
-            placeholderTextColor="#9CA3AF"
-            className="bg-gray-50 rounded-xl px-4 py-3 text-gray-800 text-base"
-          />
-        </View>
+        {/* Title Input - Only show for "Other" category */}
+        {params?.category === "Other" && (
+          <View className="mb-6">
+            <Text className="text-sm font-medium text-gray-700 mb-2">
+              Title
+            </Text>
+            <TextInput
+              value={title}
+              onChangeText={setTitle}
+              placeholder="Brief description of the issue"
+              placeholderTextColor="#9CA3AF"
+              className="bg-gray-50 rounded-xl px-4 py-3 text-gray-800 text-base"
+            />
+          </View>
+        )}
 
         {/* Description Input */}
         <View className="mb-6">
