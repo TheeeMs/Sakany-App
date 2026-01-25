@@ -1,3 +1,6 @@
+// Onboarding
+export { OnboardingScreen } from "./onboarding";
+
 // Home
 export { default as HomeScreen } from "./home/HomeScreen";
 
