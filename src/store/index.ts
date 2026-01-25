@@ -1,1 +1,1 @@
-// Zustand stores will go here
+export { useAppStore } from './appStore';
