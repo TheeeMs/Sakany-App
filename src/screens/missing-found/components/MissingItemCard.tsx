@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, TouchableOpacity, Image, Linking } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import type { MissingFoundItem } from "../types";
 
 interface MissingItemCardProps {
@@ -8,18 +8,35 @@ interface MissingItemCardProps {
   onDetailsPress: (item: MissingFoundItem) => void;
 }
 
-// Get category badge text
-const getCategoryBadge = (category: string, type: string): string => {
-  const prefix = type === "missing" ? "MISSING" : "FOUND";
+// Get category label
+const getCategoryLabel = (category: string): string => {
   switch (category) {
     case "pet":
-      return `${prefix} PET`;
+      return "Pet";
     case "item":
-      return `${prefix} ITEM`;
+      return "Item";
     case "person":
-      return `${prefix} PERSON`;
+      return "Person";
+    case "vehicle":
+      return "Vehicle";
     default:
-      return prefix;
+      return "Other";
+  }
+};
+
+// Get category badge color
+const getCategoryColor = (category: string): string => {
+  switch (category) {
+    case "pet":
+      return "#F59E0B"; // amber
+    case "item":
+      return "#0D9488"; // teal
+    case "person":
+      return "#6366F1"; // indigo
+    case "vehicle":
+      return "#EF4444"; // red
+    default:
+      return "#6B7280"; // gray
   }
 };
 
@@ -31,7 +48,7 @@ export default function MissingItemCard({
     Linking.openURL(`tel:${item.ownerPhone}`);
   };
 
-  const badgeColor = item.type === "missing" ? "#F87171" : "#34D399";
+  const categoryColor = getCategoryColor(item.category);
 
   return (
     <View
@@ -39,127 +56,176 @@ export default function MissingItemCard({
         backgroundColor: "#FFFFFF",
         borderRadius: 16,
         marginHorizontal: 16,
-        marginBottom: 12,
-        padding: 16,
+        marginBottom: 14,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.06,
-        shadowRadius: 8,
-        elevation: 3,
+        shadowOpacity: 0.08,
+        shadowRadius: 12,
+        elevation: 4,
+        overflow: "hidden",
       }}
     >
-      <View style={{ flexDirection: "row" }}>
-        {/* Image */}
-        <Image
-          source={item.image}
-          style={{
-            width: 80,
-            height: 80,
-            borderRadius: 12,
-            backgroundColor: "#F3F4F6",
-          }}
-          resizeMode="cover"
-        />
-
-        {/* Content */}
-        <View style={{ flex: 1, marginLeft: 12 }}>
-          {/* Badge and Time Row */}
+      {/* Top Section: Image + Info */}
+      <View style={{ flexDirection: "row", padding: 14 }}>
+        {/* Image with category badge */}
+        <View style={{ position: "relative" }}>
+          <Image
+            source={item.image}
+            style={{
+              width: 100,
+              height: 100,
+              borderRadius: 12,
+              backgroundColor: "#F3F4F6",
+            }}
+            resizeMode="cover"
+          />
+          {/* Category Badge on Image */}
           <View
             style={{
-              flexDirection: "row",
-              alignItems: "center",
-              marginBottom: 6,
+              position: "absolute",
+              bottom: 6,
+              left: 6,
+              backgroundColor: categoryColor,
+              paddingHorizontal: 8,
+              paddingVertical: 3,
+              borderRadius: 6,
             }}
           >
-            {/* Category Badge */}
-            <View
-              style={{
-                backgroundColor: `${badgeColor}20`,
-                paddingHorizontal: 8,
-                paddingVertical: 4,
-                borderRadius: 6,
-              }}
-            >
-              <Text
-                style={{
-                  fontSize: 10,
-                  fontWeight: "700",
-                  color: badgeColor,
-                  letterSpacing: 0.5,
-                }}
-              >
-                {getCategoryBadge(item.category, item.type)}
-              </Text>
-            </View>
-
-            {/* Time Ago */}
             <Text
               style={{
-                fontSize: 12,
-                color: "#9CA3AF",
-                marginLeft: 8,
+                fontSize: 10,
+                fontWeight: "700",
+                color: "#FFFFFF",
               }}
             >
-              {item.timeAgo}
+              {getCategoryLabel(item.category)}
             </Text>
           </View>
+        </View>
 
+        {/* Info */}
+        <View style={{ flex: 1, marginLeft: 12, justifyContent: "center" }}>
           {/* Title */}
           <Text
             style={{
               fontSize: 16,
-              fontWeight: "600",
+              fontWeight: "700",
               color: "#1F2937",
-              marginBottom: 4,
+              marginBottom: 8,
             }}
-            numberOfLines={1}
+            numberOfLines={2}
           >
             {item.title}
           </Text>
 
-          {/* Description */}
-          <Text
+          {/* Owner */}
+          <View
             style={{
-              fontSize: 13,
-              color: "#6B7280",
-              lineHeight: 18,
+              flexDirection: "row",
+              alignItems: "center",
+              marginBottom: 5,
             }}
-            numberOfLines={2}
           >
-            {item.description}
-          </Text>
+            <View
+              style={{
+                width: 22,
+                height: 22,
+                borderRadius: 11,
+                backgroundColor: "#D1FAE5",
+                alignItems: "center",
+                justifyContent: "center",
+                marginRight: 6,
+              }}
+            >
+              <Ionicons name="person" size={12} color="#059669" />
+            </View>
+            <Text
+              style={{
+                fontSize: 13,
+                color: "#4B5563",
+                fontWeight: "500",
+              }}
+            >
+              {item.ownerName}
+            </Text>
+          </View>
 
           {/* Location */}
           <View
             style={{
               flexDirection: "row",
-              alignItems: "center",
-              marginTop: 8,
+              alignItems: "flex-start",
+              marginBottom: 5,
             }}
           >
-            <Ionicons name="location-outline" size={14} color="#9CA3AF" />
+            <Ionicons
+              name="location-outline"
+              size={16}
+              color="#EF4444"
+              style={{ marginTop: 1, marginRight: 5 }}
+            />
             <Text
               style={{
                 fontSize: 12,
                 color: "#6B7280",
-                marginLeft: 4,
+                flex: 1,
               }}
+              numberOfLines={2}
             >
               {item.location}
+              {item.locationDetail ? ` · ${item.locationDetail}` : ""}
+            </Text>
+          </View>
+
+          {/* Date & Time */}
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+            }}
+          >
+            <Ionicons
+              name="time-outline"
+              size={15}
+              color="#9CA3AF"
+              style={{ marginRight: 5 }}
+            />
+            <Text
+              style={{
+                fontSize: 12,
+                color: "#9CA3AF",
+              }}
+            >
+              {item.date || "Recently"} · {item.timeAgo}
             </Text>
           </View>
         </View>
+      </View>
+
+      {/* Description */}
+      <View style={{ paddingHorizontal: 14, paddingBottom: 14 }}>
+        <Text
+          style={{
+            fontSize: 13,
+            color: "#6B7280",
+            lineHeight: 19,
+          }}
+          numberOfLines={2}
+        >
+          {item.description}
+        </Text>
       </View>
 
       {/* Action Buttons */}
       <View
         style={{
           flexDirection: "row",
-          marginTop: 16,
-          gap: 12,
+          paddingHorizontal: 14,
+          paddingBottom: 14,
+          gap: 10,
         }}
       >
-        {/* Call Owner Button */}
+        {/* Contact Button */}
         <TouchableOpacity
           onPress={handleCall}
           style={{
@@ -168,12 +234,12 @@ export default function MissingItemCard({
             alignItems: "center",
             justifyContent: "center",
             backgroundColor: "#0D9488",
-            paddingVertical: 12,
+            paddingVertical: 11,
             borderRadius: 10,
           }}
           activeOpacity={0.8}
         >
-          <Ionicons name="call-outline" size={18} color="#FFFFFF" />
+          <Ionicons name="call" size={16} color="#FFFFFF" />
           <Text
             style={{
               fontSize: 14,
@@ -182,7 +248,7 @@ export default function MissingItemCard({
               marginLeft: 6,
             }}
           >
-            Call Owner
+            Contact
           </Text>
         </TouchableOpacity>
 
@@ -191,21 +257,28 @@ export default function MissingItemCard({
           onPress={() => onDetailsPress(item)}
           style={{
             flex: 1,
+            flexDirection: "row",
             alignItems: "center",
             justifyContent: "center",
             backgroundColor: "#FFFFFF",
-            paddingVertical: 12,
+            paddingVertical: 11,
             borderRadius: 10,
-            borderWidth: 1,
-            borderColor: "#E5E7EB",
+            borderWidth: 1.5,
+            borderColor: "#0D9488",
           }}
           activeOpacity={0.7}
         >
+          <Ionicons
+            name="information-circle-outline"
+            size={16}
+            color="#0D9488"
+          />
           <Text
             style={{
               fontSize: 14,
               fontWeight: "600",
-              color: "#374151",
+              color: "#0D9488",
+              marginLeft: 5,
             }}
           >
             Details

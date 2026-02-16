@@ -33,16 +33,16 @@ export default function MissingFoundScreen() {
     {
       id: "1",
       type: "missing",
-      category: "pet",
-      title: "Blue Trek Mountain Bike",
+      category: "item",
+      title: "Black Leather Wallet",
       description:
-        "Blue Trek mountain bike with silver handlebars. She responds to her name but might be hiding under parked cars or bushes as she gets scared easily by loud noises. If found, please hold her gently, she does not scratch.",
-      location: "Building A Bike Rack",
-      locationDetail: "Near the north entrance gate",
-      date: "Dec 22, 2024",
-      timeAgo: "1d ago",
+        "Contains ID card with name Sarah Miller and several bank cards. Went missing after walking......",
+      location: "Central Park · Near main fountain bench ....",
+      locationDetail: "",
+      date: "Today",
+      timeAgo: "2:15 PM",
       image: require("../../../assets/build.png"),
-      ownerName: "Sarah Jenkins",
+      ownerName: "Sarah Miller",
       ownerPhone: "+201234567890",
       ownerUnit: "Unit 205",
       isVerified: true,
@@ -51,13 +51,13 @@ export default function MissingFoundScreen() {
       id: "2",
       type: "missing",
       category: "pet",
-      title: "Tabby Cat - 'Luna'",
+      title: "Lost Golden Retrieve...",
       description:
-        "Green eyes, wearing a black collar with a bell. Very friendly and loves treats.",
-      location: "Block B Garage",
-      locationDetail: "Underground parking level 2",
-      date: "Dec 21, 2024",
-      timeAgo: "2d ago",
+        "Max ran off while playing in the garden. He is wearing a blue collar with a name tag. He is very f...",
+      location: "Building B Garden, Near the back gate",
+      locationDetail: "",
+      date: "Today",
+      timeAgo: "4:30 PM",
       image: require("../../../assets/build.png"),
       ownerName: "Ahmed Hassan",
       ownerPhone: "+201234567891",
@@ -67,16 +67,16 @@ export default function MissingFoundScreen() {
     {
       id: "3",
       type: "missing",
-      category: "item",
-      title: "Silver MacBook Pro",
+      category: "vehicle",
+      title: "Black Electric Scooter",
       description:
-        "15-inch MacBook Pro with stickers on the cover. Last seen at the coffee shop.",
-      location: "Community Center",
-      locationDetail: "Coffee shop area",
-      date: "Dec 20, 2024",
-      timeAgo: "3d ago",
+        'I left my Xiaomi electric scooter parked near the elevator entrance last night. It has a "Sakane" stic...',
+      location: "Zone C Parking · Spot 45",
+      locationDetail: "",
+      date: "Yesterday",
+      timeAgo: "8:00 PM",
       image: require("../../../assets/build.png"),
-      ownerName: "Mohamed Ali",
+      ownerName: "John Smith",
       ownerPhone: "+201234567892",
       ownerUnit: "Unit 118",
       isVerified: false,
@@ -147,7 +147,7 @@ export default function MissingFoundScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#FFFFFF" }}>
+    <View style={{ flex: 1, backgroundColor: "#F9FAFB" }}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
       {/* Header */}
@@ -171,12 +171,12 @@ export default function MissingFoundScreen() {
             justifyContent: "center",
           }}
         >
-          <Ionicons name="arrow-back" size={24} color="#1F2937" />
+          <Ionicons name="chevron-back" size={24} color="#1F2937" />
         </TouchableOpacity>
         <Text
           style={{
             fontSize: 18,
-            fontWeight: "600",
+            fontWeight: "700",
             color: "#1F2937",
           }}
         >
@@ -190,12 +190,14 @@ export default function MissingFoundScreen() {
             justifyContent: "center",
           }}
         >
-          <Ionicons name="search-outline" size={24} color="#1F2937" />
+          <Ionicons name="search-outline" size={22} color="#1F2937" />
         </TouchableOpacity>
       </View>
 
       {/* Tab Switch */}
-      <TabSwitch activeTab={activeTab} onTabChange={setActiveTab} />
+      <View style={{ backgroundColor: "#FFFFFF", paddingBottom: 4 }}>
+        <TabSwitch activeTab={activeTab} onTabChange={setActiveTab} />
+      </View>
 
       {/* Items Count and Filter */}
       <View
@@ -204,7 +206,7 @@ export default function MissingFoundScreen() {
           alignItems: "center",
           justifyContent: "space-between",
           paddingHorizontal: 16,
-          marginBottom: 16,
+          paddingVertical: 14,
         }}
       >
         <Text
@@ -215,7 +217,7 @@ export default function MissingFoundScreen() {
           }}
         >
           {displayItems.length} {activeTab === "missing" ? "Missing" : "Found"}{" "}
-          Items
+          Reports
         </Text>
         <TouchableOpacity
           onPress={handleFilterPress}
@@ -223,8 +225,8 @@ export default function MissingFoundScreen() {
             flexDirection: "row",
             alignItems: "center",
             paddingHorizontal: 12,
-            paddingVertical: 8,
-            backgroundColor: "#F9FAFB",
+            paddingVertical: 7,
+            backgroundColor: "#FFFFFF",
             borderRadius: 8,
             borderWidth: 1,
             borderColor: "#E5E7EB",
@@ -233,15 +235,15 @@ export default function MissingFoundScreen() {
         >
           <MaterialCommunityIcons
             name="filter-variant"
-            size={18}
+            size={16}
             color="#6B7280"
           />
           <Text
             style={{
-              fontSize: 14,
+              fontSize: 13,
               fontWeight: "500",
               color: "#374151",
-              marginLeft: 6,
+              marginLeft: 5,
             }}
           >
             Filter
@@ -289,7 +291,7 @@ export default function MissingFoundScreen() {
                 marginTop: 16,
               }}
             >
-              No {activeTab} items
+              No {activeTab} reports
             </Text>
           </View>
         )}
