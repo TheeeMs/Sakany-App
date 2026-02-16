@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { CategoryType } from "./types";
 
 interface RouteParams {
@@ -18,6 +19,7 @@ interface RouteParams {
 export default function RequestDetailsScreen() {
   const navigation = useNavigation();
   const route = useRoute();
+  const insets = useSafeAreaInsets();
   const params = route.params as RouteParams;
 
   const [title, setTitle] = useState("");
@@ -54,7 +56,10 @@ export default function RequestDetailsScreen() {
   return (
     <View className="flex-1 bg-white">
       {/* Header */}
-      <View className="px-4 pt-12 pb-4 border-b border-gray-100">
+      <View
+        className="px-4 pb-4 border-b border-gray-100"
+        style={{ paddingTop: insets.top + 12 }}
+      >
         <View className="flex-row items-center justify-between">
           <TouchableOpacity
             onPress={() => navigation.goBack()}

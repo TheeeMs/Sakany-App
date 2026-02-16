@@ -11,6 +11,7 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons, MaterialCommunityIcons, Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppBottomNav } from "../../components/navigation";
 
 // Status Types
@@ -307,6 +308,7 @@ const EmptyState = ({ filter }: { filter: StatusType }) => (
 
 export default function QRHistoryScreen() {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const [selectedFilter, setSelectedFilter] = useState<StatusType>("all");
 
   // Sample History Data
@@ -404,7 +406,7 @@ export default function QRHistoryScreen() {
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
       {/* Header with Logo */}
-      <View className="px-4 pt-12 pb-4">
+      <View className="px-4 pb-4" style={{ paddingTop: insets.top + 12 }}>
         {/* Navigation Row */}
         <View className="flex-row items-center justify-between mb-4">
           <TouchableOpacity

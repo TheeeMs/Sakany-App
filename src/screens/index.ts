@@ -19,6 +19,8 @@ export { default as MaintenanceHistoryScreen } from "./maintenance/MaintenanceHi
 
 // Payment
 export { default as PaymentScreen } from "./payment/PaymentScreen";
+export { default as PaymentDetailsScreen } from "./payment/PaymentDetailsScreen";
+export { default as PaymentStatisticsScreen } from "./payment/PaymentStatisticsScreen";
 
 // Profile
 export { default as ProfileScreen } from "./profile/ProfileScreen";

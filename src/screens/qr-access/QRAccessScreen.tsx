@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppBottomNav } from "../../components/navigation";
 
 // Types
@@ -46,6 +47,7 @@ const generateAccessCode = (visitorType: VisitorType): string => {
 
 export default function QRAccessScreen() {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
 
   // State
   const [selectedVisitorType, setSelectedVisitorType] =
@@ -285,7 +287,10 @@ Share this code with your visitor for access.
       <StatusBar barStyle="dark-content" backgroundColor="#FFF8F0" />
 
       {/* Header */}
-      <View className="flex-row items-center justify-between px-4 pt-12 pb-4">
+      <View
+        className="flex-row items-center justify-between px-4 pb-4"
+        style={{ paddingTop: insets.top + 12 }}
+      >
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           className="w-10 h-10 items-center justify-center"

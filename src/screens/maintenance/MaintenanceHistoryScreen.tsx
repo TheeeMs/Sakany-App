@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { View, Text, ScrollView, TouchableOpacity } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { MaintenanceRequest, RequestStatus } from "./types";
 import { ActiveRequestCard } from "./components";
 
@@ -9,6 +10,7 @@ type FilterType = "All" | RequestStatus;
 
 export default function MaintenanceHistoryScreen() {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const [selectedFilter, setSelectedFilter] = useState<FilterType>("All");
 
   const filters: FilterType[] = ["All", "In Progress", "Completed"];
@@ -59,7 +61,10 @@ export default function MaintenanceHistoryScreen() {
   return (
     <View className="flex-1 bg-gray-50">
       {/* Header */}
-      <View className="bg-white px-4 pt-12 pb-4 border-b border-gray-100">
+      <View
+        className="bg-white px-4 pb-4 border-b border-gray-100"
+        style={{ paddingTop: insets.top + 12 }}
+      >
         <View className="flex-row items-center justify-between">
           <TouchableOpacity
             onPress={() => navigation.goBack()}
