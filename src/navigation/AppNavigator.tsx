@@ -1,5 +1,3 @@
-import React, { useEffect } from "react";
-import { View, ActivityIndicator, StyleSheet } from "react-native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import {
@@ -14,11 +12,9 @@ import {
   MaintenanceHistoryScreen,
   PaymentScreen,
   ProfileScreen,
-  OnboardingScreen,
 } from "../screens";
 import type { MissingFoundItem } from "../screens/missing-found/types";
 import { BottomTabBar } from "../components";
-import { useAppStore } from "../store";
 
 export type RootStackParamList = {
   Main: undefined;
@@ -57,7 +53,7 @@ function MainTabs() {
   );
 }
 
-function MainNavigator() {
+export default function AppNavigator() {
   return (
     <Stack.Navigator initialRouteName="Main">
       <Stack.Screen
@@ -103,39 +99,3 @@ function MainNavigator() {
     </Stack.Navigator>
   );
 }
-
-export default function AppNavigator() {
-  const {
-    isLoading,
-    showOnboarding,
-    checkOnboardingStatus,
-    completeOnboarding,
-  } = useAppStore();
-
-  useEffect(() => {
-    checkOnboardingStatus();
-  }, []);
-
-  if (isLoading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#00A996" />
-      </View>
-    );
-  }
-
-  if (showOnboarding) {
-    return <OnboardingScreen onComplete={completeOnboarding} />;
-  }
-
-  return <MainNavigator />;
-}
-
-const styles = StyleSheet.create({
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#FDF8F3",
-  },
-});

@@ -1,18 +1,11 @@
 import React from "react";
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-} from "react-native";
+import { View, Text, ScrollView, TouchableOpacity } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { CompositeNavigationProp } from "@react-navigation/native";
 import type { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import type { RootStackParamList, MainTabParamList } from "../../navigation";
 import { Ionicons } from "@expo/vector-icons";
-import { useAppStore } from "../../store";
 
 // Types
 import type { UserInfo, Banner, RecentAction } from "./types";
@@ -32,12 +25,6 @@ type NavigationProp = CompositeNavigationProp<
 
 export default function HomeScreen() {
   const navigation = useNavigation<NavigationProp>();
-  const resetOnboarding = useAppStore((state) => state.resetOnboarding);
-
-  // Function to show onboarding again
-  const showOnboardingAgain = async () => {
-    await resetOnboarding();
-  };
 
   // User Info (in real app, fetch from API or store)
   const userInfo: UserInfo = {
@@ -137,7 +124,7 @@ export default function HomeScreen() {
       <ScrollView
         className="flex-1"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 80 }}
+        contentContainerStyle={{ paddingBottom: 20 }}
       >
         {/* Banners Section */}
         <View className="mt-5">
@@ -195,37 +182,6 @@ export default function HomeScreen() {
           ))}
         </View>
       </ScrollView>
-
-      {/* Floating Button to Show Onboarding */}
-      <TouchableOpacity
-        style={styles.floatingButton}
-        onPress={showOnboardingAgain}
-        activeOpacity={0.8}
-      >
-        <Ionicons name="refresh" size={24} color="#FFF" />
-      </TouchableOpacity>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  floatingButton: {
-    position: "absolute",
-    bottom: 100,
-    right: 20,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "#00A996",
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 4.65,
-    elevation: 8,
-  },
-});
