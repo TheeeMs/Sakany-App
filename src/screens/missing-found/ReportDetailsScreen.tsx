@@ -31,6 +31,8 @@ const getCategoryBadge = (category: string, type: string): string => {
       return `${prefix} ITEM`;
     case "person":
       return `${prefix} PERSON`;
+    case "vehicle":
+      return `${prefix} VEHICLE`;
     default:
       return prefix;
   }

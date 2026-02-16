@@ -2,7 +2,7 @@
 export type TabType = "missing" | "found";
 
 // Category types
-export type CategoryType = "pet" | "item" | "person" | "other";
+export type CategoryType = "pet" | "item" | "person" | "vehicle" | "other";
 
 // Missing/Found Item interface
 export interface MissingFoundItem {
