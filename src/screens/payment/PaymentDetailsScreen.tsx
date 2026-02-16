@@ -6,7 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import type { Payment } from "./types";
-import { PaymentMethodModal } from "./components";
+import { PaymentMethodModal, PaymentSuccessModal } from "./components";
 
 type PaymentDetailsRouteProp = RouteProp<
   { PaymentDetails: { payment: Payment } },
@@ -21,6 +21,9 @@ export default function PaymentDetailsScreen() {
 
   const [selectedMethod, setSelectedMethod] = useState("visa-4265");
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [transactionId, setTransactionId] = useState("");
+  const [transactionDate, setTransactionDate] = useState("");
 
   // Saved payment methods
   const savedCards = [
@@ -84,8 +87,22 @@ export default function PaymentDetailsScreen() {
   const total = subtotal + processingFee;
 
   const handleConfirmPayment = () => {
-    console.log("Payment confirmed:", { total, selectedMethod });
-    // Handle payment confirmation
+    // Generate transaction ID and date
+    const txnId = `#TXN${Math.floor(Math.random() * 1000000)}`;
+    const now = new Date();
+    const txnDate = now.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+
+    setTransactionId(txnId);
+    setTransactionDate(txnDate);
+    setShowSuccessModal(true);
+  };
+
+  const handleSuccessClose = () => {
+    setShowSuccessModal(false);
     navigation.goBack();
   };
 
@@ -269,6 +286,15 @@ export default function PaymentDetailsScreen() {
         amount={total}
         savedCards={savedCards}
         otherMethods={otherMethods}
+      />
+
+      {/* Payment Success Modal */}
+      <PaymentSuccessModal
+        visible={showSuccessModal}
+        onClose={handleSuccessClose}
+        amount={total}
+        transactionId={transactionId}
+        date={transactionDate}
       />
     </View>
   );

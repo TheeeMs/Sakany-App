@@ -3,3 +3,4 @@ export { default as ActionButton } from "./ActionButton";
 export { default as PendingPaymentCard } from "./PendingPaymentCard";
 export { default as TransactionCard } from "./TransactionCard";
 export { default as PaymentMethodModal } from "./PaymentMethodModal";
+export { default as PaymentSuccessModal } from "./PaymentSuccessModal";
