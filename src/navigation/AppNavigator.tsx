@@ -11,9 +11,12 @@ import {
   RequestDetailsScreen,
   MaintenanceHistoryScreen,
   PaymentScreen,
+  PaymentDetailsScreen,
+  PaymentStatisticsScreen,
   ProfileScreen,
 } from "../screens";
 import type { MissingFoundItem } from "../screens/missing-found/types";
+import type { Payment } from "../screens/payment/types";
 import { BottomTabBar } from "../components";
 
 export type RootStackParamList = {
@@ -25,6 +28,8 @@ export type RootStackParamList = {
   ReportDetails: { item: MissingFoundItem };
   RequestDetails: { category: string };
   MaintenanceHistory: undefined;
+  PaymentDetails: { payment: Payment };
+  PaymentStatistics: undefined;
 };
 
 export type MainTabParamList = {
@@ -94,6 +99,16 @@ export default function AppNavigator() {
       <Stack.Screen
         name="MaintenanceHistory"
         component={MaintenanceHistoryScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="PaymentDetails"
+        component={PaymentDetailsScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="PaymentStatistics"
+        component={PaymentStatisticsScreen}
         options={{ headerShown: false }}
       />
     </Stack.Navigator>
