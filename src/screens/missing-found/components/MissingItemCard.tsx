@@ -95,7 +95,7 @@ export default function MissingItemCard({
                   fontWeight: "500",
                   color: "#FFFFFF",
                   textAlign: "center",
-                  lineHeight: 18,
+                  lineHeight: 10,
                 }}
               >
                 {getCategoryLabel(item.category)}

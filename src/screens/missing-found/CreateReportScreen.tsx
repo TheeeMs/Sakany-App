@@ -10,7 +10,11 @@ import {
   Platform,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { Ionicons } from "@expo/vector-icons";
+import {
+  Ionicons,
+  FontAwesome5,
+  MaterialCommunityIcons,
+} from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // Types
@@ -18,12 +22,42 @@ import type { TabType, CategoryType } from "./types";
 
 type ReportType = "missing" | "found";
 
-const CATEGORIES: { label: string; value: CategoryType }[] = [
-  { label: "Pet", value: "pet" },
-  { label: "Item", value: "item" },
-  { label: "Person", value: "person" },
-  { label: "Vehicle", value: "vehicle" },
-  { label: "Other", value: "other" },
+const CATEGORIES: {
+  label: string;
+  value: CategoryType;
+  iconLibrary: "Ionicons" | "MaterialCommunityIcons" | "FontAwesome5";
+  iconName: string;
+}[] = [
+  {
+    label: "Person",
+    value: "person",
+    iconLibrary: "Ionicons",
+    iconName: "person",
+  },
+  {
+    label: "Pet",
+    value: "pet",
+    iconLibrary: "MaterialCommunityIcons",
+    iconName: "paw",
+  },
+  {
+    label: "Item",
+    value: "item",
+    iconLibrary: "FontAwesome5",
+    iconName: "box-open",
+  },
+  {
+    label: "Vehicle",
+    value: "vehicle",
+    iconLibrary: "MaterialCommunityIcons",
+    iconName: "bicycle",
+  },
+  {
+    label: "Other",
+    value: "other",
+    iconLibrary: "Ionicons",
+    iconName: "ellipsis-horizontal",
+  },
 ];
 
 export default function CreateReportScreen() {
@@ -141,7 +175,7 @@ export default function CreateReportScreen() {
           <View
             style={{
               flexDirection: "row",
-              justifyContent: "space-between",
+              gap: 8,
               height: 42,
             }}
           >
@@ -149,7 +183,7 @@ export default function CreateReportScreen() {
             <TouchableOpacity
               onPress={() => setReportType("missing")}
               style={{
-                width: 164,
+                flex: 1,
                 height: 42,
                 borderRadius: 15,
                 backgroundColor:
@@ -158,7 +192,7 @@ export default function CreateReportScreen() {
                 justifyContent: "center",
                 shadowColor: "#000",
                 shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: reportType === "missing" ? 0.05 : 0.05,
+                shadowOpacity: 0.05,
                 shadowRadius: reportType === "missing" ? 2 : 4,
                 elevation: reportType === "missing" ? 1 : 2,
               }}
@@ -180,7 +214,7 @@ export default function CreateReportScreen() {
             <TouchableOpacity
               onPress={() => setReportType("found")}
               style={{
-                width: 143,
+                flex: 1,
                 height: 42,
                 borderRadius: 15,
                 backgroundColor: reportType === "found" ? "#00A996" : "#FFFFFF",
@@ -267,9 +301,7 @@ export default function CreateReportScreen() {
             <View
               style={{
                 backgroundColor: "#FFFFFF",
-                borderWidth: 1,
-                borderColor: "#E4E4E7",
-                borderRadius: 8,
+                borderRadius: 16,
                 marginTop: 4,
                 overflow: "hidden",
                 shadowColor: "#000",
@@ -279,34 +311,80 @@ export default function CreateReportScreen() {
                 elevation: 3,
               }}
             >
-              {CATEGORIES.map((cat, index) => (
-                <TouchableOpacity
-                  key={cat.value}
-                  onPress={() => {
-                    setCategory(cat.value);
-                    setShowCategoryDropdown(false);
-                  }}
-                  style={{
-                    paddingHorizontal: 16,
-                    paddingVertical: 12,
-                    borderBottomWidth: index < CATEGORIES.length - 1 ? 1 : 0,
-                    borderBottomColor: "#F3F4F6",
-                    backgroundColor:
-                      category === cat.value ? "#F0FDFA" : "#FFFFFF",
-                  }}
-                  activeOpacity={0.7}
-                >
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      fontWeight: category === cat.value ? "600" : "400",
-                      color: category === cat.value ? "#00A996" : "#000000",
+              {CATEGORIES.map((cat, index) => {
+                // Render the correct icon based on the iconLibrary
+                const renderIcon = () => {
+                  const iconColor =
+                    category === cat.value ? "#00A996" : "#999999";
+                  if (cat.iconLibrary === "Ionicons") {
+                    return (
+                      <Ionicons
+                        name={cat.iconName as any}
+                        size={24}
+                        color={iconColor}
+                      />
+                    );
+                  } else if (cat.iconLibrary === "MaterialCommunityIcons") {
+                    return (
+                      <MaterialCommunityIcons
+                        name={cat.iconName as any}
+                        size={24}
+                        color={iconColor}
+                      />
+                    );
+                  } else {
+                    return (
+                      <FontAwesome5
+                        name={cat.iconName as any}
+                        size={20}
+                        color={iconColor}
+                      />
+                    );
+                  }
+                };
+
+                return (
+                  <TouchableOpacity
+                    key={cat.value}
+                    onPress={() => {
+                      setCategory(cat.value);
+                      setShowCategoryDropdown(false);
                     }}
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 8,
+                      paddingHorizontal: 24,
+                      paddingVertical: 12,
+                      borderBottomWidth: index < CATEGORIES.length - 1 ? 1 : 0,
+                      borderBottomColor: "rgba(0,0,0,0.1)",
+                      backgroundColor:
+                        category === cat.value ? "#F0FDFA" : "#FFFFFF",
+                    }}
+                    activeOpacity={0.7}
                   >
-                    {cat.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                    <View
+                      style={{
+                        width: 24,
+                        height: 24,
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      {renderIcon()}
+                    </View>
+                    <Text
+                      style={{
+                        fontSize: 14,
+                        fontWeight: "500",
+                        color: category === cat.value ? "#00A996" : "#999999",
+                      }}
+                    >
+                      {cat.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           )}
         </View>
