@@ -34,3 +34,34 @@ export interface FeedbackPost {
     isBookmarked?: boolean;
     userVote?: "up" | "down" | null;
 }
+
+// Post status types for My Posts screen
+export type PostStatus = "approved" | "under_review" | "not_approved";
+
+// Status display config
+export interface StatusConfig {
+    label: string;
+    backgroundColor: string;
+    textColor: string;
+    iconName: string;
+}
+
+// Admin response
+export interface AdminResponse {
+    message: string;
+}
+
+// My Post interface (for the My Posts screen)
+export interface MyPost {
+    id: string;
+    title: string;
+    category: FeedbackCategoryType;
+    description: string;
+    image?: any;
+    status: PostStatus;
+    adminResponse?: AdminResponse;
+    upvotes: number;
+    downvotes: number;
+    views: number;
+    date: string;
+}

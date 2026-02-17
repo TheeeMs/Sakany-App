@@ -9,6 +9,7 @@ import {
   ReportDetailsScreen,
   CreateReportScreen,
   FeedbackScreen,
+  MyPostsScreen,
   MaintenanceScreen,
   RequestDetailsScreen,
   MaintenanceHistoryScreen,
@@ -30,6 +31,7 @@ export type RootStackParamList = {
   ReportDetails: { item: MissingFoundItem };
   CreateReport: undefined;
   Feedback: undefined;
+  MyPosts: undefined;
   RequestDetails: { category: string };
   MaintenanceHistory: undefined;
   PaymentDetails: { payment: Payment };
@@ -103,6 +105,11 @@ export default function AppNavigator() {
       <Stack.Screen
         name="Feedback"
         component={FeedbackScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="MyPosts"
+        component={MyPostsScreen}
         options={{ headerShown: false }}
       />
       <Stack.Screen

@@ -8,6 +8,8 @@ import {
   Alert,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { RootStackParamList } from "../../navigation";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -17,8 +19,10 @@ import type { FeedbackFilterType, FeedbackPost } from "./types";
 // Components
 import { FeedbackCard, FilterTabs, IdeaBanner, SearchBar } from "./components";
 
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
 export default function FeedbackScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp>();
   const insets = useSafeAreaInsets();
 
   // State
@@ -167,6 +171,7 @@ export default function FeedbackScreen() {
           Feedback
         </Text>
         <TouchableOpacity
+          onPress={() => navigation.navigate("MyPosts")}
           style={{
             width: 24,
             height: 24,
