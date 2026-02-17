@@ -19,9 +19,13 @@ import {
   PaymentDetailsScreen,
   PaymentStatisticsScreen,
   ProfileScreen,
+
+  NotificationScreen,
+
   EventsScreen,
   EventDetailsScreen,
   CreateEventScreen,
+
 } from "../screens";
 import type { MissingFoundItem } from "../screens/missing-found/types";
 import type { Payment } from "../screens/payment/types";
@@ -46,6 +50,7 @@ export type RootStackParamList = {
   MaintenanceHistory: undefined;
   PaymentDetails: { payment: Payment };
   PaymentStatistics: undefined;
+  Notifications: undefined;
 };
 
 export type MainTabParamList = {
@@ -165,6 +170,11 @@ export default function AppNavigator() {
       <Stack.Screen
         name="PaymentStatistics"
         component={PaymentStatisticsScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="Notifications"
+        component={NotificationScreen}
         options={{ headerShown: false }}
       />
     </Stack.Navigator>

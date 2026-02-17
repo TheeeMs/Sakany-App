@@ -117,7 +117,7 @@ export default function HomeScreen() {
       {/* Header */}
       <HomeHeader
         userInfo={userInfo}
-        onNotificationPress={() => console.log("Notifications pressed")}
+        onNotificationPress={() => navigation.navigate("Notifications")}
         onBuildingPress={() => console.log("Building selector pressed")}
       />
 
