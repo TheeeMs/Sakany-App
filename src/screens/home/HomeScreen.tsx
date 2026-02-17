@@ -108,7 +108,7 @@ export default function HomeScreen() {
       iconFamily: "Octicons" as const,
       backgroundColor: "#DDD6FE",
       iconColor: "#7C3AED",
-      onPress: () => console.log("Feedback pressed"),
+      onPress: () => navigation.navigate("Feedback"),
     },
   ];
 

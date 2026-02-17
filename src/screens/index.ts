@@ -23,5 +23,11 @@ export { default as PaymentScreen } from "./payment/PaymentScreen";
 export { default as PaymentDetailsScreen } from "./payment/PaymentDetailsScreen";
 export { default as PaymentStatisticsScreen } from "./payment/PaymentStatisticsScreen";
 
+// Feedback
+export { default as FeedbackScreen } from "./feedback/FeedbackScreen";
+export { default as MyPostsScreen } from "./feedback/MyPostsScreen";
+export { default as PrivateFeedbackScreen } from "./feedback/PrivateFeedbackScreen";
+export { default as CreatePostScreen } from "./feedback/CreatePostScreen";
+
 // Profile
 export { default as ProfileScreen } from "./profile/ProfileScreen";
