@@ -214,10 +214,7 @@ export default function FeedbackScreen() {
             <TouchableOpacity
               onPress={() => {
                 setShowMenu(false);
-                Alert.alert(
-                  "Private Feedback",
-                  "Private feedback messaging coming soon!",
-                );
+                navigation.navigate("PrivateFeedback");
               }}
               activeOpacity={0.6}
               style={{

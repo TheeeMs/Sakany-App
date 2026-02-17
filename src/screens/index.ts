@@ -26,6 +26,7 @@ export { default as PaymentStatisticsScreen } from "./payment/PaymentStatisticsS
 // Feedback
 export { default as FeedbackScreen } from "./feedback/FeedbackScreen";
 export { default as MyPostsScreen } from "./feedback/MyPostsScreen";
+export { default as PrivateFeedbackScreen } from "./feedback/PrivateFeedbackScreen";
 
 // Profile
 export { default as ProfileScreen } from "./profile/ProfileScreen";

@@ -65,3 +65,37 @@ export interface MyPost {
     views: number;
     date: string;
 }
+
+// Private Feedback message status
+export type PrivateMessageStatus = "responded" | "pending";
+
+// Private feedback category (extends beyond the standard categories)
+export type PrivateFeedbackCategory =
+    | "security_safety"
+    | "maintenance"
+    | "other";
+
+// Admin response for private feedback
+export interface PrivateAdminResponse {
+    teamName: string;
+    date: string;
+    message: string;
+}
+
+// Pending response placeholder
+export interface PendingResponse {
+    message: string;
+}
+
+// Private feedback message
+export interface PrivateFeedbackMessage {
+    id: string;
+    title: string;
+    category: PrivateFeedbackCategory;
+    categoryLabel: string;
+    status: PrivateMessageStatus;
+    timeAgo: string;
+    userMessage: string;
+    adminResponse?: PrivateAdminResponse;
+    pendingResponse?: PendingResponse;
+}
