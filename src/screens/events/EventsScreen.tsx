@@ -1,9 +1,17 @@
 import React, { useState } from "react";
 import { View, Text, TouchableOpacity, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { RootStackParamList } from "../../navigation/AppNavigator";
 import { Ionicons } from "@expo/vector-icons";
 import EventCard from "./components/EventCard";
 import type { Event, EventTabType } from "./types";
+
+type EventsScreenNavigationProp = NativeStackNavigationProp<
+  RootStackParamList,
+  "Events"
+>;
 
 const EVENT_IMAGE = require("../../../assets/build.png");
 
@@ -94,20 +102,28 @@ const PAST_EVENTS: Event[] = [
 ];
 
 export default function EventsScreen() {
+  const navigation = useNavigation<EventsScreenNavigationProp>();
   const [activeTab, setActiveTab] = useState<EventTabType>("upcoming");
 
   const currentEvents =
     activeTab === "upcoming" ? UPCOMING_EVENTS : PAST_EVENTS;
 
   const handleEventPress = (id: string) => {
-    console.log("Event pressed:", id);
+    navigation.navigate("EventDetails", { eventId: id });
+  };
+
+  const handleGoBack = () => {
+    navigation.goBack();
   };
 
   return (
     <SafeAreaView className="flex-1 bg-white">
       {/* Header */}
       <View className="flex-row items-center justify-between px-4 py-3 bg-white">
-        <TouchableOpacity className="w-10 h-10 items-center justify-center">
+        <TouchableOpacity
+          className="w-10 h-10 items-center justify-center"
+          onPress={handleGoBack}
+        >
           <Ionicons name="chevron-back" size={24} color="#000" />
         </TouchableOpacity>
         <Text className="text-lg font-bold text-gray-900">
