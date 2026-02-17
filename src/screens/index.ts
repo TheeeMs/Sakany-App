@@ -31,3 +31,6 @@ export { default as CreatePostScreen } from "./feedback/CreatePostScreen";
 
 // Profile
 export { default as ProfileScreen } from "./profile/ProfileScreen";
+
+// Notifications
+export { default as NotificationScreen } from "./notifications/NotificationScreen";
