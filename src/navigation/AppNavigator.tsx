@@ -11,6 +11,7 @@ import {
   FeedbackScreen,
   MyPostsScreen,
   PrivateFeedbackScreen,
+  CreatePostScreen,
   MaintenanceScreen,
   RequestDetailsScreen,
   MaintenanceHistoryScreen,
@@ -34,6 +35,7 @@ export type RootStackParamList = {
   Feedback: undefined;
   MyPosts: undefined;
   PrivateFeedback: undefined;
+  CreatePost: undefined;
   RequestDetails: { category: string };
   MaintenanceHistory: undefined;
   PaymentDetails: { payment: Payment };
@@ -117,6 +119,11 @@ export default function AppNavigator() {
       <Stack.Screen
         name="PrivateFeedback"
         component={PrivateFeedbackScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="CreatePost"
+        component={CreatePostScreen}
         options={{ headerShown: false }}
       />
       <Stack.Screen

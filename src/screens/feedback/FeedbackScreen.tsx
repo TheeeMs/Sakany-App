@@ -117,7 +117,7 @@ export default function FeedbackScreen() {
 
   // Handle New Post
   const handleNewPost = () => {
-    Alert.alert("New Post", "Create new feedback post coming soon!");
+    navigation.navigate("CreatePost");
   };
 
   // Handle Read More
