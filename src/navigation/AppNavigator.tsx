@@ -19,6 +19,7 @@ import {
   PaymentDetailsScreen,
   PaymentStatisticsScreen,
   ProfileScreen,
+  EventsScreen,
 } from "../screens";
 import type { MissingFoundItem } from "../screens/missing-found/types";
 import type { Payment } from "../screens/payment/types";
@@ -36,6 +37,7 @@ export type RootStackParamList = {
   MyPosts: undefined;
   PrivateFeedback: undefined;
   CreatePost: undefined;
+  Events: undefined;
   RequestDetails: { category: string };
   MaintenanceHistory: undefined;
   PaymentDetails: { payment: Payment };
@@ -109,6 +111,11 @@ export default function AppNavigator() {
       <Stack.Screen
         name="Feedback"
         component={FeedbackScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="Events"
+        component={EventsScreen}
         options={{ headerShown: false }}
       />
       <Stack.Screen

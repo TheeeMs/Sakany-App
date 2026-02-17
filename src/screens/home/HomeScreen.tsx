@@ -99,7 +99,7 @@ export default function HomeScreen() {
       iconFamily: "Ionicons" as const,
       backgroundColor: "#FED7AA",
       iconColor: "#EA580C",
-      onPress: () => console.log("Events pressed"),
+      onPress: () => navigation.navigate("Events"),
     },
     {
       id: "4",
