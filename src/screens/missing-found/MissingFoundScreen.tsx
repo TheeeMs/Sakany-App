@@ -153,14 +153,7 @@ export default function MissingFoundScreen() {
 
   // Handle Add New Press
   const handleAddNew = () => {
-    Alert.alert(
-      "Report Item",
-      `Would you like to report a ${activeTab} item?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Continue", onPress: () => console.log("Add new item") },
-      ],
-    );
+    navigation.navigate("CreateReport" as any);
   };
 
   return (
