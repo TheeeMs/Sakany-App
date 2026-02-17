@@ -6,6 +6,8 @@ import {
   ScrollView,
   StatusBar,
   Alert,
+  Modal,
+  Pressable,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -28,6 +30,7 @@ export default function FeedbackScreen() {
   // State
   const [activeFilter, setActiveFilter] = useState<FeedbackFilterType>("all");
   const [searchText, setSearchText] = useState("");
+  const [showMenu, setShowMenu] = useState(false);
 
   // Sample Data
   const feedbackPosts: FeedbackPost[] = [
@@ -145,6 +148,7 @@ export default function FeedbackScreen() {
           paddingBottom: 12,
           backgroundColor: "#FFFFFF",
           height: insets.top + 56,
+          zIndex: 10,
         }}
       >
         <TouchableOpacity
@@ -171,7 +175,7 @@ export default function FeedbackScreen() {
           Feedback
         </Text>
         <TouchableOpacity
-          onPress={() => navigation.navigate("MyPosts")}
+          onPress={() => setShowMenu(!showMenu)}
           style={{
             width: 24,
             height: 24,
@@ -182,6 +186,129 @@ export default function FeedbackScreen() {
           <Ionicons name="list" size={24} color="#000000" />
         </TouchableOpacity>
       </View>
+
+      {/* Dropdown Menu Modal */}
+      <Modal
+        visible={showMenu}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowMenu(false)}
+      >
+        <Pressable style={{ flex: 1 }} onPress={() => setShowMenu(false)}>
+          <View
+            style={{
+              position: "absolute",
+              top: insets.top + 52,
+              right: 16,
+              backgroundColor: "#FFFFFF",
+              borderRadius: 16,
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 10 },
+              shadowOpacity: 0.1,
+              shadowRadius: 15,
+              elevation: 8,
+              overflow: "hidden",
+            }}
+          >
+            {/* Private Feedback */}
+            <TouchableOpacity
+              onPress={() => {
+                setShowMenu(false);
+                Alert.alert(
+                  "Private Feedback",
+                  "Private feedback messaging coming soon!",
+                );
+              }}
+              activeOpacity={0.6}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 12,
+                paddingLeft: 16,
+                paddingRight: 24,
+                height: 68,
+              }}
+            >
+              <Ionicons
+                name="chatbubble-ellipses-outline"
+                size={20}
+                color="#00A996"
+              />
+              <View>
+                <Text
+                  style={{
+                    fontSize: 14,
+                    fontWeight: "500",
+                    color: "#101828",
+                    lineHeight: 20,
+                  }}
+                >
+                  Private Feedback
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 12,
+                    fontWeight: "500",
+                    color: "#6A7282",
+                    lineHeight: 16,
+                  }}
+                >
+                  Messages to admin
+                </Text>
+              </View>
+            </TouchableOpacity>
+
+            {/* Divider */}
+            <View
+              style={{
+                height: 1.71,
+                backgroundColor: "#F3F4F6",
+              }}
+            />
+
+            {/* My Posts */}
+            <TouchableOpacity
+              onPress={() => {
+                setShowMenu(false);
+                navigation.navigate("MyPosts");
+              }}
+              activeOpacity={0.6}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 12,
+                paddingLeft: 16,
+                paddingRight: 24,
+                height: 68,
+              }}
+            >
+              <Ionicons name="bulb-outline" size={20} color="#00A996" />
+              <View>
+                <Text
+                  style={{
+                    fontSize: 14,
+                    fontWeight: "500",
+                    color: "#101828",
+                    lineHeight: 20,
+                  }}
+                >
+                  My Posts
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 12,
+                    fontWeight: "500",
+                    color: "#6A7282",
+                    lineHeight: 16,
+                  }}
+                >
+                  View your suggestions
+                </Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      </Modal>
 
       <ScrollView
         style={{ flex: 1 }}
