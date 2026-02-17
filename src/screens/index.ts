@@ -32,5 +32,11 @@ export { default as CreatePostScreen } from "./feedback/CreatePostScreen";
 // Profile
 export { default as ProfileScreen } from "./profile/ProfileScreen";
 
-// Notifications
+
 export { default as NotificationScreen } from "./notifications/NotificationScreen";
+
+// Events
+export { default as EventsScreen } from "./events/EventsScreen";
+export { default as EventDetailsScreen } from "./events/EventDetailsScreen";
+export { default as CreateEventScreen } from "./events/CreateEventScreen";
+
