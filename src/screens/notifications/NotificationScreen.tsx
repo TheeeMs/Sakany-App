@@ -33,6 +33,7 @@ export default function NotificationScreen() {
       timeAgo: "2 mins ago",
       category: "maintenance",
       isRead: false,
+      isUrgent: true,
       date: "today",
     },
     {
@@ -42,7 +43,6 @@ export default function NotificationScreen() {
       timeAgo: "30 mins ago",
       category: "announcement",
       isRead: false,
-      isUrgent: true,
       date: "today",
     },
     // Yesterday
@@ -72,6 +72,7 @@ export default function NotificationScreen() {
       timeAgo: "1 day ago",
       category: "achievement",
       isRead: true,
+      isUrgent: true,
       isPersonal: true,
       date: "yesterday",
     },
@@ -93,7 +94,18 @@ export default function NotificationScreen() {
       timeAgo: "2 days ago",
       category: "reading",
       isRead: true,
-      isPersonal: true,
+      isUrgent: true,
+      date: "2024-12-27",
+    },
+    {
+      id: "8",
+      title: "Security Alert",
+      description:
+        "Unusual activity detected near the parking area of Building B",
+      timeAgo: "3 days ago",
+      category: "announcement",
+      isRead: true,
+      isUrgent: true,
       date: "2024-12-27",
     },
   ];
