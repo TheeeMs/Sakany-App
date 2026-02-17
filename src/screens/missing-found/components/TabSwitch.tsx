@@ -8,15 +8,16 @@ interface TabSwitchProps {
 }
 
 export default function TabSwitch({ activeTab, onTabChange }: TabSwitchProps) {
+  const isMissingActive = activeTab === "missing";
+  const isFoundActive = activeTab === "found";
+
   return (
     <View
       style={{
         flexDirection: "row",
-        backgroundColor: "#F3F4F6",
-        borderRadius: 25,
-        padding: 4,
+        gap: 8,
         marginHorizontal: 16,
-        marginBottom: 16,
+        marginBottom: 8,
       }}
     >
       {/* Missing Tab */}
@@ -24,19 +25,24 @@ export default function TabSwitch({ activeTab, onTabChange }: TabSwitchProps) {
         onPress={() => onTabChange("missing")}
         style={{
           flex: 1,
-          paddingVertical: 10,
-          borderRadius: 22,
-          backgroundColor: activeTab === "missing" ? "#FEE2E2" : "transparent",
+          height: 46,
+          borderRadius: 50,
+          backgroundColor: isMissingActive ? "#FFE2E2" : "#FFFFFF",
           alignItems: "center",
           justifyContent: "center",
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: isMissingActive ? 0 : 0.05,
+          shadowRadius: isMissingActive ? 0 : 4,
+          elevation: isMissingActive ? 0 : 2,
         }}
         activeOpacity={0.7}
       >
         <Text
           style={{
-            fontSize: 14,
-            fontWeight: "600",
-            color: activeTab === "missing" ? "#EF4444" : "#6B7280",
+            fontSize: 16,
+            fontWeight: "500",
+            color: isMissingActive ? "#C10007" : "#666666",
           }}
         >
           Missing
@@ -48,19 +54,24 @@ export default function TabSwitch({ activeTab, onTabChange }: TabSwitchProps) {
         onPress={() => onTabChange("found")}
         style={{
           flex: 1,
-          paddingVertical: 10,
-          borderRadius: 22,
-          backgroundColor: activeTab === "found" ? "#0D9488" : "transparent",
+          height: 46,
+          borderRadius: 50,
+          backgroundColor: isFoundActive ? "#E2F7ED" : "#FFFFFF",
           alignItems: "center",
           justifyContent: "center",
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: isFoundActive ? 0 : 0.05,
+          shadowRadius: isFoundActive ? 0 : 4,
+          elevation: isFoundActive ? 0 : 2,
         }}
         activeOpacity={0.7}
       >
         <Text
           style={{
-            fontSize: 14,
-            fontWeight: "600",
-            color: activeTab === "found" ? "#FFFFFF" : "#6B7280",
+            fontSize: 16,
+            fontWeight: "500",
+            color: isFoundActive ? "#007A4D" : "#666666",
           }}
         >
           Found

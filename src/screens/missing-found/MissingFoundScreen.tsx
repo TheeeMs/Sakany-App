@@ -36,7 +36,7 @@ export default function MissingFoundScreen() {
       category: "item",
       title: "Black Leather Wallet",
       description:
-        "Contains ID card with name Sarah Miller and several bank cards. Went missing after walking......",
+        "Contains ID card with name Sarah Miller and several bank cards. Went missing after walking……",
       location: "Central Park · Near main fountain bench ....",
       locationDetail: "",
       date: "Today",
@@ -88,35 +88,52 @@ export default function MissingFoundScreen() {
     {
       id: "4",
       type: "found",
-      category: "item",
-      title: "Black Leather Wallet",
+      category: "pet",
+      title: "White Persian Cat",
       description:
-        "Found near the main entrance. Contains some cards and cash. Please describe contents to claim.",
-      location: "Building A Lobby",
-      locationDetail: "Reception desk",
-      date: "Dec 22, 2024",
-      timeAgo: "1h ago",
+        "Found this lovely white cat wandering near the market. She is very tame and wearing a pink colla...",
+      location: "Near Supermarket",
+      locationDetail: "",
+      date: "Today",
+      timeAgo: "8:15 AM",
       image: require("../../../assets/build.png"),
-      ownerName: "Security Office",
+      ownerName: "Mona El-Sayed",
       ownerPhone: "+201234567893",
-      ownerUnit: "Security",
+      ownerUnit: "Apt 102",
       isVerified: true,
     },
     {
       id: "5",
       type: "found",
-      category: "pet",
-      title: "Golden Retriever",
+      category: "item",
+      title: "Set of Car Keys (Toy...",
       description:
-        "Friendly dog found wandering in the garden. No collar but very well trained.",
-      location: "Central Garden",
-      locationDetail: "Near the fountain",
-      date: "Dec 21, 2024",
-      timeAgo: "3h ago",
+        'Found a set of keys with a Toyota logo and a blue "Sakane" keychain on the bench. I handed them o...',
+      location: "Walkway near Pool Area",
+      locationDetail: "",
+      date: "Today",
+      timeAgo: "10:00 AM",
       image: require("../../../assets/build.png"),
-      ownerName: "Guard Station",
+      ownerName: "Layla Mahmoud",
       ownerPhone: "+201234567894",
-      ownerUnit: "Gate 1",
+      ownerUnit: "Gate 4",
+      isVerified: true,
+    },
+    {
+      id: "6",
+      type: "found",
+      category: "vehicle",
+      title: "Kids' Blue Bicycle",
+      description:
+        'A small blue bicycle has been parked in front of the lobby for over 24 hours. It has no lock and a "Spid...',
+      location: "Building D Entrance",
+      locationDetail: "",
+      date: "Yesterday",
+      timeAgo: "6:00 PM",
+      image: require("../../../assets/build.png"),
+      ownerName: "Karim Tarek",
+      ownerPhone: "+201234567895",
+      ownerUnit: "Lobby",
       isVerified: true,
     },
   ];
@@ -147,55 +164,59 @@ export default function MissingFoundScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#F9FAFB" }}>
+    <View style={{ flex: 1, backgroundColor: "#F9FAFC" }}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
-      {/* Header */}
+      {/* Header / Top Bar */}
       <View
         style={{
           flexDirection: "row",
           alignItems: "center",
-          justifyContent: "space-between",
+          gap: 16,
           paddingHorizontal: 16,
-          paddingTop: insets.top + 12,
-          paddingBottom: 16,
+          paddingTop: insets.top + 8,
+          paddingBottom: 12,
           backgroundColor: "#FFFFFF",
+          height: insets.top + 56,
         }}
       >
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={{
-            width: 40,
-            height: 40,
+            width: 24,
+            height: 24,
             alignItems: "center",
             justifyContent: "center",
           }}
         >
-          <Ionicons name="chevron-back" size={24} color="#1F2937" />
+          <Ionicons name="chevron-back" size={24} color="#000000" />
         </TouchableOpacity>
         <Text
           style={{
-            fontSize: 18,
-            fontWeight: "700",
-            color: "#1F2937",
+            flex: 1,
+            fontSize: 20,
+            fontWeight: "600",
+            color: "#000000",
+            textAlign: "center",
+            lineHeight: 30,
           }}
         >
           Missing & Found
         </Text>
         <TouchableOpacity
           style={{
-            width: 40,
-            height: 40,
+            width: 24,
+            height: 24,
             alignItems: "center",
             justifyContent: "center",
           }}
         >
-          <Ionicons name="search-outline" size={22} color="#1F2937" />
+          <Ionicons name="search-outline" size={22} color="#000000" />
         </TouchableOpacity>
       </View>
 
       {/* Tab Switch */}
-      <View style={{ backgroundColor: "#FFFFFF", paddingBottom: 4 }}>
+      <View style={{ paddingTop: 8, paddingBottom: 4 }}>
         <TabSwitch activeTab={activeTab} onTabChange={setActiveTab} />
       </View>
 
@@ -206,14 +227,15 @@ export default function MissingFoundScreen() {
           alignItems: "center",
           justifyContent: "space-between",
           paddingHorizontal: 16,
-          paddingVertical: 14,
+          paddingVertical: 12,
         }}
       >
         <Text
           style={{
-            fontSize: 15,
+            fontSize: 16,
             fontWeight: "600",
-            color: "#1F2937",
+            color: "#000000",
+            lineHeight: 24,
           }}
         >
           {displayItems.length} {activeTab === "missing" ? "Missing" : "Found"}{" "}
@@ -225,25 +247,25 @@ export default function MissingFoundScreen() {
             flexDirection: "row",
             alignItems: "center",
             paddingHorizontal: 12,
-            paddingVertical: 7,
+            paddingVertical: 8,
             backgroundColor: "#FFFFFF",
-            borderRadius: 8,
-            borderWidth: 1,
-            borderColor: "#E5E7EB",
+            borderRadius: 16,
+            gap: 8,
+            height: 37,
+            width: 82,
           }}
           activeOpacity={0.7}
         >
           <MaterialCommunityIcons
             name="filter-variant"
             size={16}
-            color="#6B7280"
+            color="#666666"
           />
           <Text
             style={{
-              fontSize: 13,
+              fontSize: 14,
               fontWeight: "500",
-              color: "#374151",
-              marginLeft: 5,
+              color: "#666666",
             }}
           >
             Filter
@@ -297,20 +319,20 @@ export default function MissingFoundScreen() {
         )}
       </ScrollView>
 
-      {/* Floating Add Button */}
+      {/* Floating Add Button (FAB) */}
       <TouchableOpacity
         onPress={handleAddNew}
         style={{
           position: "absolute",
-          bottom: 100,
-          right: 20,
+          bottom: 30,
+          right: 16,
           width: 56,
           height: 56,
-          borderRadius: 28,
-          backgroundColor: "#0D9488",
+          borderRadius: 50,
+          backgroundColor: "#00A996",
           alignItems: "center",
           justifyContent: "center",
-          shadowColor: "#0D9488",
+          shadowColor: "#00A996",
           shadowOffset: { width: 0, height: 4 },
           shadowOpacity: 0.3,
           shadowRadius: 8,
@@ -318,7 +340,7 @@ export default function MissingFoundScreen() {
         }}
         activeOpacity={0.8}
       >
-        <Ionicons name="add" size={28} color="#FFFFFF" />
+        <Ionicons name="add" size={24} color="#FFFFFF" />
       </TouchableOpacity>
     </View>
   );

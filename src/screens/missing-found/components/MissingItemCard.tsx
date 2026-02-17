@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, TouchableOpacity, Image, Linking } from "react-native";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import type { MissingFoundItem } from "../types";
 
 interface MissingItemCardProps {
@@ -24,20 +24,9 @@ const getCategoryLabel = (category: string): string => {
   }
 };
 
-// Get category badge color
-const getCategoryColor = (category: string): string => {
-  switch (category) {
-    case "pet":
-      return "#F59E0B"; // amber
-    case "item":
-      return "#0D9488"; // teal
-    case "person":
-      return "#6366F1"; // indigo
-    case "vehicle":
-      return "#EF4444"; // red
-    default:
-      return "#6B7280"; // gray
-  }
+// Get badge color based on item type (missing = red, found = green)
+const getBadgeColor = (type: string): string => {
+  return type === "found" ? "#059669" : "#DE4544";
 };
 
 export default function MissingItemCard({
@@ -48,7 +37,7 @@ export default function MissingItemCard({
     Linking.openURL(`tel:${item.ownerPhone}`);
   };
 
-  const categoryColor = getCategoryColor(item.category);
+  const badgeColor = getBadgeColor(item.type);
 
   return (
     <View
@@ -56,159 +45,183 @@ export default function MissingItemCard({
         backgroundColor: "#FFFFFF",
         borderRadius: 16,
         marginHorizontal: 16,
-        marginBottom: 14,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 12,
-        elevation: 4,
-        overflow: "hidden",
+        marginBottom: 8,
+        padding: 12,
       }}
     >
-      {/* Top Section: Image + Info */}
-      <View style={{ flexDirection: "row", padding: 14 }}>
-        {/* Image with category badge */}
-        <View style={{ position: "relative" }}>
-          <Image
-            source={item.image}
+      {/* Content Section */}
+      <View style={{ gap: 12 }}>
+        {/* Top Section: Image + Info */}
+        <View style={{ flexDirection: "row", gap: 8, height: 128 }}>
+          {/* Image with category badge */}
+          <View
             style={{
-              width: 100,
-              height: 100,
+              width: 128,
+              height: 128,
               borderRadius: 12,
-              backgroundColor: "#F3F4F6",
-            }}
-            resizeMode="cover"
-          />
-          {/* Category Badge on Image */}
-          <View
-            style={{
-              position: "absolute",
-              bottom: 6,
-              left: 6,
-              backgroundColor: categoryColor,
-              paddingHorizontal: 8,
-              paddingVertical: 3,
-              borderRadius: 6,
+              overflow: "hidden",
+              position: "relative",
             }}
           >
-            <Text
+            <Image
+              source={item.image}
               style={{
-                fontSize: 10,
-                fontWeight: "700",
-                color: "#FFFFFF",
+                width: 128,
+                height: 128,
+                borderRadius: 12,
+                backgroundColor: "#F3F4F6",
               }}
-            >
-              {getCategoryLabel(item.category)}
-            </Text>
-          </View>
-        </View>
-
-        {/* Info */}
-        <View style={{ flex: 1, marginLeft: 12, justifyContent: "center" }}>
-          {/* Title */}
-          <Text
-            style={{
-              fontSize: 16,
-              fontWeight: "700",
-              color: "#1F2937",
-              marginBottom: 8,
-            }}
-            numberOfLines={2}
-          >
-            {item.title}
-          </Text>
-
-          {/* Owner */}
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              marginBottom: 5,
-            }}
-          >
+              resizeMode="cover"
+            />
+            {/* Category Badge */}
             <View
               style={{
-                width: 22,
-                height: 22,
-                borderRadius: 11,
-                backgroundColor: "#D1FAE5",
+                position: "absolute",
+                bottom: 4,
+                left: 4,
+                backgroundColor: badgeColor,
+                paddingHorizontal: 10,
+                paddingVertical: 2,
+                borderRadius: 6,
+                minWidth: 66,
+                height: 18,
                 alignItems: "center",
                 justifyContent: "center",
-                marginRight: 6,
               }}
             >
-              <Ionicons name="person" size={12} color="#059669" />
+              <Text
+                style={{
+                  fontSize: 12,
+                  fontWeight: "500",
+                  color: "#FFFFFF",
+                  textAlign: "center",
+                  lineHeight: 18,
+                }}
+              >
+                {getCategoryLabel(item.category)}
+              </Text>
             </View>
-            <Text
-              style={{
-                fontSize: 13,
-                color: "#4B5563",
-                fontWeight: "500",
-              }}
-            >
-              {item.ownerName}
-            </Text>
           </View>
 
-          {/* Location */}
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "flex-start",
-              marginBottom: 5,
-            }}
-          >
-            <Ionicons
-              name="location-outline"
-              size={16}
-              color="#EF4444"
-              style={{ marginTop: 1, marginRight: 5 }}
-            />
+          {/* Info */}
+          <View style={{ flex: 1, gap: 8 }}>
+            {/* Title */}
             <Text
               style={{
-                fontSize: 12,
-                color: "#6B7280",
-                flex: 1,
+                fontSize: 16,
+                fontWeight: "600",
+                color: "#000000",
+                lineHeight: 24,
               }}
-              numberOfLines={2}
+              numberOfLines={1}
             >
-              {item.location}
-              {item.locationDetail ? ` · ${item.locationDetail}` : ""}
+              {item.title}
             </Text>
-          </View>
 
-          {/* Date & Time */}
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-            }}
-          >
-            <Ionicons
-              name="time-outline"
-              size={15}
-              color="#9CA3AF"
-              style={{ marginRight: 5 }}
-            />
-            <Text
+            {/* Owner */}
+            <View
               style={{
-                fontSize: 12,
-                color: "#9CA3AF",
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 4,
               }}
             >
-              {item.date || "Recently"} · {item.timeAgo}
-            </Text>
+              <View
+                style={{
+                  width: 24,
+                  height: 24,
+                  borderRadius: 200,
+                  backgroundColor: "#99DCD5",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Ionicons name="person" size={12} color="#FFFFFF" />
+              </View>
+              <Text
+                style={{
+                  fontSize: 14,
+                  color: "#666666",
+                  fontWeight: "500",
+                  lineHeight: 24,
+                }}
+              >
+                {item.ownerName}
+              </Text>
+            </View>
+
+            {/* Location */}
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "flex-start",
+                gap: 4,
+              }}
+            >
+              <View
+                style={{
+                  width: 24,
+                  height: 24,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Ionicons name="location" size={18} color="#00A996" />
+              </View>
+              <Text
+                style={{
+                  fontSize: 13,
+                  color: "#666666",
+                  fontWeight: "500",
+                  flex: 1,
+                  lineHeight: 18.5,
+                }}
+                numberOfLines={2}
+              >
+                {item.location}
+                {item.locationDetail ? ` · ${item.locationDetail}` : ""}
+              </Text>
+            </View>
+
+            {/* Date & Time */}
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 4,
+              }}
+            >
+              <View
+                style={{
+                  width: 24,
+                  height: 20,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Ionicons name="time" size={18} color="#00A996" />
+              </View>
+              <Text
+                style={{
+                  fontSize: 13,
+                  color: "#666666",
+                  fontWeight: "500",
+                  lineHeight: 19.5,
+                }}
+              >
+                {item.date || "Recently"} · {item.timeAgo}
+              </Text>
+            </View>
           </View>
         </View>
-      </View>
 
-      {/* Description */}
-      <View style={{ paddingHorizontal: 14, paddingBottom: 14 }}>
+        {/* Description */}
         <Text
           style={{
             fontSize: 13,
-            color: "#6B7280",
-            lineHeight: 19,
+            color: "#666666",
+            fontWeight: "500",
+            lineHeight: 19.5,
           }}
           numberOfLines={2}
         >
@@ -220,9 +233,9 @@ export default function MissingItemCard({
       <View
         style={{
           flexDirection: "row",
-          paddingHorizontal: 14,
-          paddingBottom: 14,
-          gap: 10,
+          gap: 8,
+          marginTop: 12,
+          height: 46,
         }}
       >
         {/* Contact Button */}
@@ -233,19 +246,19 @@ export default function MissingItemCard({
             flexDirection: "row",
             alignItems: "center",
             justifyContent: "center",
-            backgroundColor: "#0D9488",
-            paddingVertical: 11,
-            borderRadius: 10,
+            backgroundColor: "#00A996",
+            height: 46,
+            borderRadius: 12,
+            gap: 5,
           }}
           activeOpacity={0.8}
         >
-          <Ionicons name="call" size={16} color="#FFFFFF" />
+          <Ionicons name="call" size={20} color="#FFFFFF" />
           <Text
             style={{
-              fontSize: 14,
+              fontSize: 16,
               fontWeight: "600",
               color: "#FFFFFF",
-              marginLeft: 6,
             }}
           >
             Contact
@@ -256,29 +269,29 @@ export default function MissingItemCard({
         <TouchableOpacity
           onPress={() => onDetailsPress(item)}
           style={{
-            flex: 1,
+            width: 114,
             flexDirection: "row",
             alignItems: "center",
             justifyContent: "center",
             backgroundColor: "#FFFFFF",
-            paddingVertical: 11,
-            borderRadius: 10,
-            borderWidth: 1.5,
-            borderColor: "#0D9488",
+            height: 46,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: "#63CBC4",
+            gap: 5,
           }}
           activeOpacity={0.7}
         >
           <Ionicons
             name="information-circle-outline"
-            size={16}
-            color="#0D9488"
+            size={20}
+            color="#63CBC4"
           />
           <Text
             style={{
-              fontSize: 14,
+              fontSize: 16,
               fontWeight: "600",
-              color: "#0D9488",
-              marginLeft: 5,
+              color: "#63CBC4",
             }}
           >
             Details
