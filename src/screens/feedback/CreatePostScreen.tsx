@@ -202,7 +202,7 @@ export default function CreatePostScreen() {
             >
               {postType === "public"
                 ? "Public posts can be voted on by all residents and may be implemented"
-                : "Private posts are sent directly to admin for review"}
+                : "Private feedback will only be seen by administrators"}
             </Text>
           </View>
 
@@ -412,62 +412,64 @@ export default function CreatePostScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Post anonymously */}
-          <TouchableOpacity
-            onPress={() => setIsAnonymous(!isAnonymous)}
-            activeOpacity={0.8}
-            style={{
-              backgroundColor: "#FFFFFF",
-              borderRadius: 16,
-              flexDirection: "row",
-              alignItems: "center",
-              gap: 12,
-              paddingHorizontal: 16,
-              paddingVertical: 16,
-            }}
-          >
-            {/* Checkbox */}
-            <View
+          {/* Post anonymously — only shown in public mode */}
+          {postType === "public" && (
+            <TouchableOpacity
+              onPress={() => setIsAnonymous(!isAnonymous)}
+              activeOpacity={0.8}
               style={{
-                width: 20,
-                height: 20,
-                borderRadius: 4,
-                borderWidth: 1.71,
-                borderColor: isAnonymous ? "#00A996" : "#D1D5DC",
-                backgroundColor: isAnonymous ? "#00A996" : "#FFFFFF",
+                backgroundColor: "#FFFFFF",
+                borderRadius: 16,
+                flexDirection: "row",
                 alignItems: "center",
-                justifyContent: "center",
+                gap: 12,
+                paddingHorizontal: 16,
+                paddingVertical: 16,
               }}
             >
-              {isAnonymous && (
-                <Ionicons name="checkmark" size={14} color="#FFFFFF" />
-              )}
-            </View>
-            <View style={{ flex: 1, gap: 4 }}>
-              <Text
+              {/* Checkbox */}
+              <View
                 style={{
-                  fontSize: 14,
-                  fontWeight: "400",
-                  color: "#101828",
-                  lineHeight: 20,
+                  width: 20,
+                  height: 20,
+                  borderRadius: 4,
+                  borderWidth: 1.71,
+                  borderColor: isAnonymous ? "#00A996" : "#D1D5DC",
+                  backgroundColor: isAnonymous ? "#00A996" : "#FFFFFF",
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
               >
-                Post anonymously
-              </Text>
-              <Text
-                style={{
-                  fontSize: 12,
-                  fontWeight: "400",
-                  color: "#6A7282",
-                  lineHeight: 16,
-                }}
-              >
-                Your name will be hidden from other residents
-              </Text>
-            </View>
-          </TouchableOpacity>
+                {isAnonymous && (
+                  <Ionicons name="checkmark" size={14} color="#FFFFFF" />
+                )}
+              </View>
+              <View style={{ flex: 1, gap: 4 }}>
+                <Text
+                  style={{
+                    fontSize: 14,
+                    fontWeight: "400",
+                    color: "#101828",
+                    lineHeight: 20,
+                  }}
+                >
+                  Post anonymously
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 12,
+                    fontWeight: "400",
+                    color: "#6A7282",
+                    lineHeight: 16,
+                  }}
+                >
+                  Your name will be hidden from other residents
+                </Text>
+              </View>
+            </TouchableOpacity>
+          )}
 
-          {/* Tips for a great post */}
+          {/* Tips box */}
           <View
             style={{
               backgroundColor: "#EFF6FF",
@@ -496,39 +498,78 @@ export default function CreatePostScreen() {
                     lineHeight: 20,
                   }}
                 >
-                  Tips for a great post
+                  {postType === "public"
+                    ? "Tips for a great post"
+                    : "Your feedback matters"}
                 </Text>
                 <View style={{ gap: 4 }}>
-                  <Text
-                    style={{
-                      fontSize: 12,
-                      fontWeight: "400",
-                      color: "#4A5565",
-                      lineHeight: 19.5,
-                    }}
-                  >
-                    • Be clear and specific about your suggestion
-                  </Text>
-                  <Text
-                    style={{
-                      fontSize: 12,
-                      fontWeight: "400",
-                      color: "#4A5565",
-                      lineHeight: 19.5,
-                    }}
-                  >
-                    • Explain how it benefits the community
-                  </Text>
-                  <Text
-                    style={{
-                      fontSize: 12,
-                      fontWeight: "400",
-                      color: "#4A5565",
-                      lineHeight: 19.5,
-                    }}
-                  >
-                    • Add photos to make your post more engaging
-                  </Text>
+                  {postType === "public" ? (
+                    <>
+                      <Text
+                        style={{
+                          fontSize: 12,
+                          fontWeight: "400",
+                          color: "#4A5565",
+                          lineHeight: 19.5,
+                        }}
+                      >
+                        • Be clear and specific about your suggestion
+                      </Text>
+                      <Text
+                        style={{
+                          fontSize: 12,
+                          fontWeight: "400",
+                          color: "#4A5565",
+                          lineHeight: 19.5,
+                        }}
+                      >
+                        • Explain how it benefits the community
+                      </Text>
+                      <Text
+                        style={{
+                          fontSize: 12,
+                          fontWeight: "400",
+                          color: "#4A5565",
+                          lineHeight: 19.5,
+                        }}
+                      >
+                        • Add photos to make your post more engaging
+                      </Text>
+                    </>
+                  ) : (
+                    <>
+                      <Text
+                        style={{
+                          fontSize: 12,
+                          fontWeight: "400",
+                          color: "#4A5565",
+                          lineHeight: 19.5,
+                        }}
+                      >
+                        • Provide detailed information about your concern
+                      </Text>
+                      <Text
+                        style={{
+                          fontSize: 12,
+                          fontWeight: "400",
+                          color: "#4A5565",
+                          lineHeight: 19.5,
+                        }}
+                      >
+                        • Include relevant details (dates, locations, etc.)
+                      </Text>
+                      <Text
+                        style={{
+                          fontSize: 12,
+                          fontWeight: "400",
+                          color: "#4A5565",
+                          lineHeight: 19.5,
+                        }}
+                      >
+                        • Admin will respond within 48 hours
+                      </Text>
+                    </>
+                  )}
                 </View>
               </View>
             </View>
@@ -557,7 +598,7 @@ export default function CreatePostScreen() {
                 lineHeight: 21,
               }}
             >
-              Publish Post
+              {postType === "public" ? "Publish Post" : "Send to Admin"}
             </Text>
           </TouchableOpacity>
         </ScrollView>
