@@ -21,6 +21,7 @@ import {
   ProfileScreen,
   EventsScreen,
   EventDetailsScreen,
+  CreateEventScreen,
 } from "../screens";
 import type { MissingFoundItem } from "../screens/missing-found/types";
 import type { Payment } from "../screens/payment/types";
@@ -40,6 +41,7 @@ export type RootStackParamList = {
   CreatePost: undefined;
   Events: undefined;
   EventDetails: { eventId: string };
+  CreateEvent: undefined;
   RequestDetails: { category: string };
   MaintenanceHistory: undefined;
   PaymentDetails: { payment: Payment };
@@ -123,6 +125,11 @@ export default function AppNavigator() {
       <Stack.Screen
         name="EventDetails"
         component={EventDetailsScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="CreateEvent"
+        component={CreateEventScreen}
         options={{ headerShown: false }}
       />
       <Stack.Screen

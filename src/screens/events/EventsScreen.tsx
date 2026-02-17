@@ -116,6 +116,10 @@ export default function EventsScreen() {
     navigation.goBack();
   };
 
+  const handleCreateEvent = () => {
+    navigation.navigate("CreateEvent");
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-white">
       {/* Header */}
@@ -208,6 +212,7 @@ export default function EventsScreen() {
 
       {/* Floating Action Button */}
       <TouchableOpacity
+        onPress={handleCreateEvent}
         activeOpacity={0.9}
         className="absolute bottom-6 right-6 w-14 h-14 bg-[#00a693] rounded-full items-center justify-center"
         style={{
