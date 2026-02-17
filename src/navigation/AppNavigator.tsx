@@ -7,6 +7,7 @@ import {
   QRHistoryScreen,
   MissingFoundScreen,
   ReportDetailsScreen,
+  CreateReportScreen,
   MaintenanceScreen,
   RequestDetailsScreen,
   MaintenanceHistoryScreen,
@@ -26,6 +27,7 @@ export type RootStackParamList = {
   QRHistory: undefined;
   MissingFound: undefined;
   ReportDetails: { item: MissingFoundItem };
+  CreateReport: undefined;
   RequestDetails: { category: string };
   MaintenanceHistory: undefined;
   PaymentDetails: { payment: Payment };
@@ -89,6 +91,11 @@ export default function AppNavigator() {
       <Stack.Screen
         name="ReportDetails"
         component={ReportDetailsScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="CreateReport"
+        component={CreateReportScreen}
         options={{ headerShown: false }}
       />
       <Stack.Screen

@@ -10,7 +10,7 @@ import {
   Linking,
 } from "react-native";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // Types
@@ -21,21 +21,25 @@ type ReportDetailsRouteProp = RouteProp<
   "ReportDetails"
 >;
 
-// Get category badge
-const getCategoryBadge = (category: string, type: string): string => {
-  const prefix = type === "missing" ? "MISSING" : "FOUND";
+// Get category label
+const getCategoryLabel = (category: string): string => {
   switch (category) {
     case "pet":
-      return `${prefix} PET`;
+      return "Pet";
     case "item":
-      return `${prefix} ITEM`;
+      return "Item";
     case "person":
-      return `${prefix} PERSON`;
+      return "Person";
     case "vehicle":
-      return `${prefix} VEHICLE`;
+      return "Vehicle";
     default:
-      return prefix;
+      return "Other";
   }
+};
+
+// Get badge color based on item type
+const getBadgeColor = (type: string): string => {
+  return type === "found" ? "#059669" : "#DE4544";
 };
 
 export default function ReportDetailsScreen() {
@@ -53,7 +57,17 @@ export default function ReportDetailsScreen() {
     );
   }
 
-  const badgeColor = item.type === "missing" ? "#F87171" : "#34D399";
+  const badgeColor = getBadgeColor(item.type);
+
+  // Get owner initials
+  const ownerInitials =
+    item.ownerInitials ||
+    item.ownerName
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
 
   // Handle Share
   const handleShare = async () => {
@@ -85,37 +99,41 @@ export default function ReportDetailsScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#FFFFFF" }}>
+    <View style={{ flex: 1, backgroundColor: "#F9FAFC" }}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
-      {/* Header */}
+      {/* Header / Top Bar */}
       <View
         style={{
           flexDirection: "row",
           alignItems: "center",
-          justifyContent: "space-between",
+          gap: 16,
           paddingHorizontal: 16,
-          paddingTop: insets.top + 12,
-          paddingBottom: 16,
+          paddingTop: insets.top + 8,
+          paddingBottom: 12,
           backgroundColor: "#FFFFFF",
+          height: insets.top + 56,
         }}
       >
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={{
-            width: 40,
-            height: 40,
+            width: 24,
+            height: 24,
             alignItems: "center",
             justifyContent: "center",
           }}
         >
-          <Ionicons name="arrow-back" size={24} color="#1F2937" />
+          <Ionicons name="chevron-back" size={24} color="#000000" />
         </TouchableOpacity>
         <Text
           style={{
-            fontSize: 18,
+            flex: 1,
+            fontSize: 20,
             fontWeight: "600",
-            color: "#1F2937",
+            color: "#000000",
+            textAlign: "center",
+            lineHeight: 30,
           }}
         >
           Report Details
@@ -123,35 +141,37 @@ export default function ReportDetailsScreen() {
         <TouchableOpacity
           onPress={handleShare}
           style={{
-            width: 40,
-            height: 40,
+            width: 24,
+            height: 24,
             alignItems: "center",
             justifyContent: "center",
           }}
         >
-          <Ionicons name="share-social-outline" size={24} color="#1F2937" />
+          <Ionicons name="share-social-outline" size={22} color="#000000" />
         </TouchableOpacity>
       </View>
 
       <ScrollView
         style={{ flex: 1 }}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 120 }}
+        contentContainerStyle={{ paddingBottom: 100 }}
       >
         {/* Main Image */}
         <View
           style={{
             marginHorizontal: 16,
-            borderRadius: 16,
+            marginTop: 8,
+            borderRadius: 15,
             overflow: "hidden",
             position: "relative",
+            height: 273,
           }}
         >
           <Image
             source={item.image}
             style={{
               width: "100%",
-              height: 220,
+              height: 273,
               backgroundColor: "#F3F4F6",
             }}
             resizeMode="cover"
@@ -163,20 +183,23 @@ export default function ReportDetailsScreen() {
               bottom: 12,
               left: 12,
               backgroundColor: badgeColor,
-              paddingHorizontal: 10,
-              paddingVertical: 6,
-              borderRadius: 8,
+              width: 100,
+              height: 27,
+              borderRadius: 16,
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
             <Text
               style={{
-                fontSize: 11,
-                fontWeight: "700",
+                fontSize: 16,
+                fontWeight: "600",
                 color: "#FFFFFF",
-                letterSpacing: 0.5,
+                textAlign: "center",
+                lineHeight: 24,
               }}
             >
-              {getCategoryBadge(item.category, item.type)}
+              {getCategoryLabel(item.category)}
             </Text>
           </View>
         </View>
@@ -184,78 +207,85 @@ export default function ReportDetailsScreen() {
         {/* Title */}
         <Text
           style={{
-            fontSize: 22,
-            fontWeight: "700",
-            color: "#1F2937",
+            fontSize: 20,
+            fontWeight: "600",
+            color: "#000000",
             marginHorizontal: 16,
-            marginTop: 20,
+            marginTop: 16,
+            lineHeight: 30,
           }}
         >
           {item.title}
         </Text>
 
-        {/* Date and Time */}
+        {/* Date and Time Row */}
         <View
           style={{
             flexDirection: "row",
             alignItems: "center",
             marginHorizontal: 16,
-            marginTop: 10,
+            marginTop: 8,
+            gap: 4,
           }}
         >
-          <Ionicons name="calendar-outline" size={16} color="#6B7280" />
-          <Text
-            style={{
-              fontSize: 14,
-              color: "#6B7280",
-              marginLeft: 6,
-            }}
-          >
-            {item.date || "Dec 22, 2024"}
-          </Text>
+          {/* Date */}
           <View
             style={{
-              width: 4,
-              height: 4,
-              borderRadius: 2,
-              backgroundColor: "#D1D5DB",
-              marginHorizontal: 10,
-            }}
-          />
-          <Ionicons name="time-outline" size={16} color="#6B7280" />
-          <Text
-            style={{
-              fontSize: 14,
-              color: "#6B7280",
-              marginLeft: 6,
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 4,
+              flex: 1,
             }}
           >
-            {item.timeAgo}
-          </Text>
+            <Ionicons name="calendar-outline" size={21} color="#666666" />
+            <Text
+              style={{
+                fontSize: 16,
+                fontWeight: "500",
+                color: "#666666",
+                lineHeight: 24,
+              }}
+            >
+              {item.date || "Dec 22, 2024"}
+            </Text>
+          </View>
+
+          {/* Time */}
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 4,
+              flex: 1,
+            }}
+          >
+            <Ionicons name="time-outline" size={22} color="#666666" />
+            <Text
+              style={{
+                fontSize: 16,
+                fontWeight: "500",
+                color: "#666666",
+                lineHeight: 24,
+              }}
+            >
+              {item.timeAgo}
+            </Text>
+          </View>
         </View>
 
-        {/* Description Section */}
-        <View style={{ marginHorizontal: 16, marginTop: 24 }}>
-          <Text
-            style={{
-              fontSize: 16,
-              fontWeight: "600",
-              color: "#1F2937",
-              marginBottom: 10,
-            }}
-          >
-            Description
-          </Text>
-          <Text
-            style={{
-              fontSize: 15,
-              color: "#4B5563",
-              lineHeight: 24,
-            }}
-          >
-            {item.description}
-          </Text>
-        </View>
+        {/* Description */}
+        <Text
+          style={{
+            fontSize: 14,
+            fontWeight: "400",
+            color: "#666666",
+            marginHorizontal: 16,
+            marginTop: 16,
+            lineHeight: 21,
+          }}
+        >
+          {item.description}
+        </Text>
 
         {/* Location Card */}
         <TouchableOpacity
@@ -263,185 +293,163 @@ export default function ReportDetailsScreen() {
             flexDirection: "row",
             alignItems: "center",
             marginHorizontal: 16,
-            marginTop: 24,
-            backgroundColor: "#F9FAFB",
-            borderRadius: 12,
-            padding: 16,
+            marginTop: 20,
+            backgroundColor: "#FFFFFF",
+            borderRadius: 15,
+            height: 80,
+            paddingHorizontal: 20,
+            gap: 20,
           }}
           activeOpacity={0.7}
         >
+          {/* Location Icon Circle */}
           <View
             style={{
-              width: 44,
-              height: 44,
-              borderRadius: 22,
-              backgroundColor: "#ECFDF5",
+              width: 48,
+              height: 48,
+              borderRadius: 24,
+              backgroundColor: "#E7F7F7",
               alignItems: "center",
               justifyContent: "center",
             }}
           >
-            <Ionicons name="location" size={22} color="#10B981" />
+            <Ionicons name="location" size={22} color="#00A996" />
           </View>
-          <View style={{ flex: 1, marginLeft: 12 }}>
-            <Text
-              style={{
-                fontSize: 11,
-                fontWeight: "600",
-                color: "#9CA3AF",
-                letterSpacing: 0.5,
-                marginBottom: 4,
-              }}
-            >
-              LAST SEEN LOCATION
-            </Text>
+
+          {/* Location Text */}
+          <View style={{ flex: 1, gap: 4 }}>
             <Text
               style={{
                 fontSize: 15,
                 fontWeight: "600",
-                color: "#1F2937",
+                color: "#000000",
+                lineHeight: 22.5,
               }}
             >
               {item.location}
             </Text>
-            {item.locationDetail && (
-              <Text
-                style={{
-                  fontSize: 13,
-                  color: "#6B7280",
-                  marginTop: 2,
-                }}
-              >
-                {item.locationDetail}
-              </Text>
-            )}
+            <Text
+              style={{
+                fontSize: 13,
+                fontWeight: "400",
+                color: "#999999",
+                lineHeight: 19.5,
+              }}
+            >
+              Tap for the last seen location
+            </Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+
+          {/* Caret Right */}
+          <Ionicons name="chevron-forward" size={24} color="#000000" />
         </TouchableOpacity>
 
         {/* Reported By Section */}
-        <View style={{ marginHorizontal: 16, marginTop: 24 }}>
+        <View style={{ marginHorizontal: 16, marginTop: 20, gap: 8 }}>
           <Text
             style={{
               fontSize: 16,
               fontWeight: "600",
-              color: "#1F2937",
-              marginBottom: 12,
+              color: "#000000",
+              lineHeight: 24,
             }}
           >
             Reported By
           </Text>
+
           <View
             style={{
               flexDirection: "row",
               alignItems: "center",
-              backgroundColor: "#F9FAFB",
-              borderRadius: 12,
-              padding: 16,
+              backgroundColor: "#FFFFFF",
+              borderRadius: 15,
+              height: 80,
+              paddingHorizontal: 16,
             }}
           >
-            {/* Avatar */}
+            {/* Avatar + Info */}
             <View
               style={{
-                width: 50,
-                height: 50,
-                borderRadius: 25,
-                backgroundColor: "#D1FAE5",
+                flexDirection: "row",
                 alignItems: "center",
-                justifyContent: "center",
+                gap: 12,
+                flex: 1,
               }}
             >
-              <Text
-                style={{
-                  fontSize: 18,
-                  fontWeight: "600",
-                  color: "#059669",
-                }}
-              >
-                {item.ownerInitials ||
-                  item.ownerName
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")
-                    .toUpperCase()
-                    .slice(0, 2)}
-              </Text>
-            </View>
-
-            {/* Info */}
-            <View style={{ flex: 1, marginLeft: 12 }}>
-              <Text
-                style={{
-                  fontSize: 16,
-                  fontWeight: "600",
-                  color: "#1F2937",
-                }}
-              >
-                {item.ownerName}
-              </Text>
+              {/* Teal Avatar */}
               <View
                 style={{
-                  flexDirection: "row",
+                  width: 48,
+                  height: 48,
+                  borderRadius: 24,
+                  backgroundColor: "#00A996",
                   alignItems: "center",
-                  marginTop: 4,
+                  justifyContent: "center",
                 }}
               >
-                {item.isVerified && (
-                  <>
-                    <View
-                      style={{
-                        width: 8,
-                        height: 8,
-                        borderRadius: 4,
-                        backgroundColor: "#10B981",
-                        marginRight: 6,
-                      }}
-                    />
-                    <Text
-                      style={{
-                        fontSize: 13,
-                        color: "#6B7280",
-                      }}
-                    >
-                      Verified Resident
-                    </Text>
-                    <Text
-                      style={{
-                        fontSize: 13,
-                        color: "#D1D5DB",
-                        marginHorizontal: 6,
-                      }}
-                    >
-                      •
-                    </Text>
-                  </>
-                )}
                 <Text
                   style={{
-                    fontSize: 13,
-                    color: "#6B7280",
+                    fontSize: 16,
+                    fontWeight: "500",
+                    color: "#FFFFFF",
+                    lineHeight: 24,
                   }}
                 >
-                  {item.ownerUnit || "Unit 205"}
+                  {ownerInitials}
+                </Text>
+              </View>
+
+              {/* Name + Unit */}
+              <View>
+                <Text
+                  style={{
+                    fontSize: 14,
+                    fontWeight: "600",
+                    color: "#101828",
+                    lineHeight: 19.6,
+                  }}
+                >
+                  {item.ownerName}
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 12,
+                    fontWeight: "400",
+                    color: "#6A7282",
+                    lineHeight: 16,
+                  }}
+                >
+                  {item.ownerUnit || "Events Team"}
                 </Text>
               </View>
             </View>
+
+            {/* Phone Button */}
+            <TouchableOpacity
+              onPress={handleCall}
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 20,
+                backgroundColor: "rgba(0, 169, 150, 0.1)",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="call" size={20} color="#00A996" />
+            </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
 
-      {/* Call Button */}
+      {/* Call Reporter Button */}
       <View
         style={{
-          position: "absolute",
-          bottom: 0,
-          left: 0,
-          right: 0,
           paddingHorizontal: 16,
-          paddingTop: 16,
+          paddingTop: 12,
           paddingBottom: insets.bottom + 16,
-          backgroundColor: "#FFFFFF",
-          borderTopWidth: 1,
-          borderTopColor: "#F3F4F6",
+          backgroundColor: "#F9FAFC",
         }}
       >
         <TouchableOpacity
@@ -450,24 +458,20 @@ export default function ReportDetailsScreen() {
             flexDirection: "row",
             alignItems: "center",
             justifyContent: "center",
-            backgroundColor: "#0D9488",
-            paddingVertical: 16,
-            borderRadius: 12,
-            shadowColor: "#0D9488",
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.25,
-            shadowRadius: 8,
-            elevation: 5,
+            backgroundColor: "#00A996",
+            height: 56,
+            borderRadius: 16,
+            gap: 8,
           }}
           activeOpacity={0.8}
         >
-          <Ionicons name="call-outline" size={20} color="#FFFFFF" />
+          <Ionicons name="call" size={20} color="#FFFFFF" />
           <Text
             style={{
               fontSize: 16,
               fontWeight: "600",
               color: "#FFFFFF",
-              marginLeft: 8,
+              lineHeight: 24,
             }}
           >
             Call Reporter
