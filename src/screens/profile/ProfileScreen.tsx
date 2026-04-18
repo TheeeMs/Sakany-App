@@ -12,17 +12,9 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../../navigation";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useAuthStore } from "../../store/authStore";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
-
-// User profile data (in a real app this would come from API/store)
-const userProfile = {
-  name: "Ahmed Ali",
-  building: "Building A",
-  unit: "Unit 205",
-  phone: "+20 123 456 7890",
-  email: "ahmed.ali@email.com",
-};
 
 // Personal info row item
 interface InfoRowProps {
@@ -148,11 +140,26 @@ function SettingsRow({
 export default function ProfileScreen() {
   const navigation = useNavigation<NavigationProp>();
   const insets = useSafeAreaInsets();
+  const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
+
+  const fullName =
+    user?.firstName && user?.lastName
+      ? `${user.firstName} ${user.lastName}`
+      : "Resident";
+
+  const phone = user?.phoneNumber ?? "-";
+  const email = user?.email ?? "-";
+  const unit = "Building / Unit not available";
 
   const handleLogout = () => {
     Alert.alert("Logout", "Are you sure you want to logout?", [
       { text: "Cancel", style: "cancel" },
-      { text: "Logout", style: "destructive", onPress: () => {} },
+      {
+        text: "Logout",
+        style: "destructive",
+        onPress: () => logout(),
+      },
     ]);
   };
 
@@ -237,7 +244,7 @@ export default function ProfileScreen() {
                 lineHeight: 22,
               }}
             >
-              {userProfile.name}
+              {fullName}
             </Text>
             <Text
               style={{
@@ -247,7 +254,7 @@ export default function ProfileScreen() {
                 lineHeight: 20,
               }}
             >
-              {userProfile.building} - {userProfile.unit}
+              {unit}
             </Text>
           </View>
         </View>
@@ -288,18 +295,10 @@ export default function ProfileScreen() {
             <InfoRow
               iconName="call-outline"
               label="Phone Number"
-              value={userProfile.phone}
+              value={phone}
             />
-            <InfoRow
-              iconName="mail-outline"
-              label="Email"
-              value={userProfile.email}
-            />
-            <InfoRow
-              iconName="business-outline"
-              label="Unit"
-              value={`${userProfile.building} - ${userProfile.unit}`}
-            />
+            <InfoRow iconName="mail-outline" label="Email" value={email} />
+            <InfoRow iconName="business-outline" label="Unit" value={unit} />
           </View>
         </View>
 

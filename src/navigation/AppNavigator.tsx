@@ -1,6 +1,9 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import {
+  GetStartedScreen,
+  LoginScreen,
+  RegisterScreen,
   HomeScreen,
   AboutScreen,
   QRAccessScreen,
@@ -19,19 +22,20 @@ import {
   PaymentDetailsScreen,
   PaymentStatisticsScreen,
   ProfileScreen,
-
   NotificationScreen,
-
   EventsScreen,
   EventDetailsScreen,
   CreateEventScreen,
-
 } from "../screens";
 import type { MissingFoundItem } from "../screens/missing-found/types";
 import type { Payment } from "../screens/payment/types";
 import { BottomTabBar } from "../components";
+import { useAuthStore } from "../store/authStore";
 
 export type RootStackParamList = {
+  GetStarted: undefined;
+  Login: undefined;
+  Register: undefined;
   Main: undefined;
   About: undefined;
   QRAccess: undefined;
@@ -80,103 +84,127 @@ function MainTabs() {
 }
 
 export default function AppNavigator() {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+
   return (
-    <Stack.Navigator initialRouteName="Main">
-      <Stack.Screen
-        name="Main"
-        component={MainTabs}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="About"
-        component={AboutScreen}
-        options={{ title: "About" }}
-      />
-      <Stack.Screen
-        name="QRAccess"
-        component={QRAccessScreen}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="QRHistory"
-        component={QRHistoryScreen}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="MissingFound"
-        component={MissingFoundScreen}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="ReportDetails"
-        component={ReportDetailsScreen}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="CreateReport"
-        component={CreateReportScreen}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="Feedback"
-        component={FeedbackScreen}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="Events"
-        component={EventsScreen}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="EventDetails"
-        component={EventDetailsScreen}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="CreateEvent"
-        component={CreateEventScreen}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="MyPosts"
-        component={MyPostsScreen}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="PrivateFeedback"
-        component={PrivateFeedbackScreen}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="CreatePost"
-        component={CreatePostScreen}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="RequestDetails"
-        component={RequestDetailsScreen}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="MaintenanceHistory"
-        component={MaintenanceHistoryScreen}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="PaymentDetails"
-        component={PaymentDetailsScreen}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="PaymentStatistics"
-        component={PaymentStatisticsScreen}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="Notifications"
-        component={NotificationScreen}
-        options={{ headerShown: false }}
-      />
+    <Stack.Navigator initialRouteName={isAuthenticated ? "Main" : "GetStarted"}>
+      {!isAuthenticated ? (
+        <>
+          <Stack.Screen
+            name="GetStarted"
+            component={GetStartedScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Login"
+            component={LoginScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Register"
+            component={RegisterScreen}
+            options={{ headerShown: false }}
+          />
+        </>
+      ) : (
+        <>
+          <Stack.Screen
+            name="Main"
+            component={MainTabs}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="About"
+            component={AboutScreen}
+            options={{ title: "About" }}
+          />
+          <Stack.Screen
+            name="QRAccess"
+            component={QRAccessScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="QRHistory"
+            component={QRHistoryScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="MissingFound"
+            component={MissingFoundScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="ReportDetails"
+            component={ReportDetailsScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="CreateReport"
+            component={CreateReportScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Feedback"
+            component={FeedbackScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Events"
+            component={EventsScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="EventDetails"
+            component={EventDetailsScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="CreateEvent"
+            component={CreateEventScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="MyPosts"
+            component={MyPostsScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="PrivateFeedback"
+            component={PrivateFeedbackScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="CreatePost"
+            component={CreatePostScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="RequestDetails"
+            component={RequestDetailsScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="MaintenanceHistory"
+            component={MaintenanceHistoryScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="PaymentDetails"
+            component={PaymentDetailsScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="PaymentStatistics"
+            component={PaymentStatisticsScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Notifications"
+            component={NotificationScreen}
+            options={{ headerShown: false }}
+          />
+        </>
+      )}
     </Stack.Navigator>
   );
 }
