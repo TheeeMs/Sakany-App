@@ -139,7 +139,15 @@ export default function LoginScreen() {
               </Text>
             </TouchableOpacity>
 
-         
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={() => navigation.navigate("PhoneLogin")}
+              className="w-full h-12 rounded-[10px] items-center justify-center"
+            >
+              <Text className="text-[#00A996] text-[14px] font-semibold">
+                Login with phone
+              </Text>
+            </TouchableOpacity>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

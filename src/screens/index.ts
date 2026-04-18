@@ -35,6 +35,7 @@ export { default as ProfileScreen } from "./profile/ProfileScreen";
 // Auth
 export { default as GetStartedScreen } from "./auth/GetStartedScreen";
 export { default as LoginScreen } from "./auth/LoginScreen";
+export { default as PhoneLoginScreen } from "./auth/PhoneLoginScreen";
 export { default as RegisterScreen } from "./auth/RegisterScreen";
 
 export { default as NotificationScreen } from "./notifications/NotificationScreen";

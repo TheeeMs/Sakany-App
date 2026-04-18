@@ -1,9 +1,12 @@
+import axios from "axios";
 import { create } from "zustand";
 import {
   getCurrentUser,
+  loginWithPhone,
   loginWithEmail,
-  registerWithEmail,
+  register,
   refreshAccessToken,
+  sendOtp,
   type CurrentUser,
   type RegisterLoginMethod,
   type ResidentType,
@@ -17,6 +20,8 @@ interface AuthState {
   isLoading: boolean;
   error: string | null;
   isAuthenticated: boolean;
+  sendOtpToPhone: (phoneNumber: string) => Promise<void>;
+  loginWithPhoneOtp: (phoneNumber: string, otp: string) => Promise<void>;
   loginWithEmailPassword: (email: string, password: string) => Promise<void>;
   registerWithEmailPassword: (params: {
     firstName: string;
@@ -35,6 +40,34 @@ interface AuthState {
 }
 
 function readErrorMessage(error: unknown) {
+  if (axios.isAxiosError(error)) {
+    const status = error.response?.status;
+    const requestUrl = error.config?.url || "";
+    const dataMessage =
+      typeof error.response?.data === "object" && error.response?.data !== null
+        ? "message" in error.response.data &&
+          typeof error.response.data.message === "string"
+          ? error.response.data.message
+          : null
+        : null;
+
+    if (dataMessage) {
+      return dataMessage;
+    }
+
+    if (status === 409) {
+      if (requestUrl.includes("/auth/send-otp")) {
+        return "OTP already sent. Check your messages or try again in a minute.";
+      }
+      if (requestUrl.includes("/auth/login/phone")) {
+        return "This OTP is invalid or expired. Please request a new code.";
+      }
+      if (requestUrl.includes("/auth/register")) {
+        return "This account already exists. Try logging in instead.";
+      }
+    }
+  }
+
   if (
     typeof error === "object" &&
     error !== null &&
@@ -64,6 +97,50 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isLoading: false,
   error: null,
   isAuthenticated: false,
+
+  sendOtpToPhone: async (phoneNumber) => {
+    set({ isLoading: true, error: null });
+
+    try {
+      await sendOtp({ phoneNumber });
+      set({ isLoading: false });
+    } catch (error) {
+      set({
+        isLoading: false,
+        error: readErrorMessage(error),
+      });
+      throw error;
+    }
+  },
+
+  loginWithPhoneOtp: async (phoneNumber, otp) => {
+    set({ isLoading: true, error: null });
+
+    try {
+      const auth = await loginWithPhone({ phoneNumber, otp });
+      setApiAccessToken(auth.accessToken);
+
+      set({
+        accessToken: auth.accessToken,
+        refreshToken: auth.refreshToken,
+        isAuthenticated: true,
+      });
+
+      const me = await getCurrentUser();
+      set({ user: me, isLoading: false });
+    } catch (error) {
+      setApiAccessToken(null);
+      set({
+        accessToken: null,
+        refreshToken: null,
+        user: null,
+        isAuthenticated: false,
+        isLoading: false,
+        error: readErrorMessage(error),
+      });
+      throw error;
+    }
+  },
 
   loginWithEmailPassword: async (email, password) => {
     set({ isLoading: true, error: null });
@@ -107,7 +184,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ isLoading: true, error: null });
 
     try {
-      const auth = await registerWithEmail({
+      const auth = await register({
         firstName,
         lastName,
         phoneNumber,

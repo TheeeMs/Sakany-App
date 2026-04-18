@@ -3,6 +3,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import {
   GetStartedScreen,
   LoginScreen,
+  PhoneLoginScreen,
   RegisterScreen,
   HomeScreen,
   AboutScreen,
@@ -35,6 +36,7 @@ import { useAuthStore } from "../store/authStore";
 export type RootStackParamList = {
   GetStarted: undefined;
   Login: undefined;
+  PhoneLogin: undefined;
   Register: undefined;
   Main: undefined;
   About: undefined;
@@ -98,6 +100,11 @@ export default function AppNavigator() {
           <Stack.Screen
             name="Login"
             component={LoginScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="PhoneLogin"
+            component={PhoneLoginScreen}
             options={{ headerShown: false }}
           />
           <Stack.Screen
