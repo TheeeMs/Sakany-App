@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Alert,
-  type AlertButton,
   RefreshControl,
   ScrollView,
   Text,
@@ -12,12 +11,8 @@ import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 import {
-  cancelMaintenanceRequest,
   getMaintenanceRequestById,
   getMaintenanceRequestsByResident,
-  rejectMaintenanceRequest,
-  resolveMaintenanceRequest,
-  startMaintenanceRequest,
   type MaintenanceRequestApiItem,
 } from "../../services/maintenance";
 import { useAuthStore } from "../../store/authStore";
@@ -142,76 +137,20 @@ export default function MaintenanceScreen() {
     [requests],
   );
 
-  const executeActionAndReload = async (
-    action: () => Promise<unknown>,
-    successMessage: string,
-  ) => {
-    try {
-      await action();
-      Alert.alert("Done", successMessage);
-      await loadRequests();
-    } catch {
-      Alert.alert("Error", "Action failed. Please try again.");
-    }
-  };
-
   const handleRequestPress = async (request: MaintenanceRequest) => {
     try {
       const details = await getMaintenanceRequestById(request.id);
       const normalizedStatus = toUiStatus(details.status);
-
-      const actions: AlertButton[] = [
-        { text: "Close", style: "cancel" as const },
-      ];
-
-      if (normalizedStatus === "Pending") {
-        actions.push({
-          text: "Start",
-          onPress: () =>
-            void executeActionAndReload(
-              () => startMaintenanceRequest(request.id),
-              "Request moved to in progress.",
-            ),
-        });
-        actions.push({
-          text: "Reject",
-          onPress: () =>
-            void executeActionAndReload(
-              () => rejectMaintenanceRequest(request.id),
-              "Request rejected.",
-            ),
-        });
-      }
-
-      if (normalizedStatus === "In Progress") {
-        actions.push({
-          text: "Resolve",
-          onPress: () =>
-            void executeActionAndReload(
-              () => resolveMaintenanceRequest(request.id),
-              "Request resolved.",
-            ),
-        });
-      }
-
-      if (
-        normalizedStatus === "Pending" ||
-        normalizedStatus === "In Progress"
-      ) {
-        actions.push({
-          text: "Cancel",
-          onPress: () =>
-            void executeActionAndReload(
-              () => cancelMaintenanceRequest(request.id),
-              "Request cancelled.",
-            ),
-        });
-      }
-
       Alert.alert(
-        request.title,
-        `Status: ${normalizedStatus}\nCategory: ${request.category}`,
-        actions,
+        details.title?.trim() || request.title,
+        [
+          `Description: ${details.description?.trim() || request.description}`,
+          `Status: ${normalizedStatus}`,
+          `Category: ${toUiCategory(details.category)}`,
+          `Location: ${toUiLocation(details.locationLabel ?? details.location)}`,
+          `Date: ${request.date}`,
+        ].join("\n"),
+        [{ text: "Close", style: "cancel" }],
       );
     } catch {
       Alert.alert("Error", "Failed to load request details.");

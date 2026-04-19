@@ -47,6 +47,27 @@ function sanitizePhone(value: string) {
   return normalizeDigits(value).replace(/\D/g, "");
 }
 
+function toEgyptInternationalPhone(phoneDigits: string) {
+  const digits = sanitizePhone(phoneDigits);
+
+  if (!digits) {
+    return "";
+  }
+
+  // Already international without plus (e.g. 201555100100)
+  if (digits.startsWith("20")) {
+    return `+${digits}`;
+  }
+
+  // Local Egyptian mobile format (e.g. 01555100100)
+  if (digits.startsWith("0")) {
+    return `+2${digits}`;
+  }
+
+  // Fallback to requested behavior: auto-prepend +2
+  return `+2${digits}`;
+}
+
 function sanitizeOtp(value: string) {
   return normalizeDigits(value).replace(/\D/g, "");
 }
@@ -67,6 +88,10 @@ export default function PhoneLoginScreen() {
   const sanitizedPhone = useMemo(
     () => sanitizePhone(phoneNumber),
     [phoneNumber],
+  );
+  const apiPhone = useMemo(
+    () => toEgyptInternationalPhone(sanitizedPhone),
+    [sanitizedPhone],
   );
   const sanitizedOtp = useMemo(() => sanitizeOtp(otp), [otp]);
 
@@ -99,7 +124,7 @@ export default function PhoneLoginScreen() {
     clearError();
 
     try {
-      await sendOtpToPhone(sanitizedPhone);
+      await sendOtpToPhone(apiPhone);
       setOtpSent(true);
       setResendCountdown(60);
     } catch (error) {
@@ -120,7 +145,7 @@ export default function PhoneLoginScreen() {
     clearError();
 
     try {
-      await loginWithPhoneOtp(sanitizedPhone, sanitizedOtp);
+      await loginWithPhoneOtp(apiPhone, sanitizedOtp);
     } catch {
       // Error is already handled in auth store.
     }
