@@ -1,61 +1,129 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
+import axios from "axios";
 import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  TextInput,
+  ActivityIndicator,
   Alert,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import type { CategoryType } from "./types";
+import {
+  createMaintenanceRequest,
+  resolveResidentUnitId,
+} from "../../services/maintenance";
+import type { RootStackParamList } from "../../navigation";
+import { useAuthStore } from "../../store/authStore";
+import type { CategoryType, RequestLocation } from "./types";
+import { MAINTENANCE_CATEGORIES, mapCategoryToBackend } from "./categoryMap";
+import { CategoryButton, LocationTab } from "./components";
+
+type NavigationProp = NativeStackNavigationProp<
+  RootStackParamList,
+  "RequestDetails"
+>;
 
 interface RouteParams {
-  category: CategoryType;
+  category?: CategoryType;
 }
 
 export default function RequestDetailsScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp>();
   const route = useRoute();
   const insets = useSafeAreaInsets();
-  const params = route.params as RouteParams;
+  const params = (route.params || {}) as RouteParams;
+  const residentId = useAuthStore((state) => state.user?.id);
+  const unitId = useAuthStore((state) => state.unitId);
 
-  const [title, setTitle] = useState("");
+  const [location, setLocation] = useState<RequestLocation>("At Home");
+  const [selectedCategory, setSelectedCategory] = useState<CategoryType>(
+    params.category && params.category !== "Other"
+      ? params.category
+      : "Plumbing",
+  );
   const [description, setDescription] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = () => {
-    if (!title.trim()) {
-      Alert.alert("Error", "Please enter a title for your request");
+  const resolvedTitle = useMemo(
+    () => `${selectedCategory} request`,
+    [selectedCategory],
+  );
+
+  const onPickCategory = (category: CategoryType) => {
+    if (category === "Other") {
+      navigation.navigate("OtherRequest", { category: "Other" });
       return;
     }
 
+    setSelectedCategory(category);
+  };
+
+  const handleSubmit = async () => {
     if (!description.trim()) {
       Alert.alert("Error", "Please provide a description");
       return;
     }
 
-    // Submit the request
-    Alert.alert("Success", "Your maintenance request has been submitted!", [
-      {
-        text: "OK",
-        onPress: () => navigation.goBack(),
-      },
-    ]);
-  };
+    if (!residentId) {
+      Alert.alert("Error", "Resident profile is not loaded yet.");
+      return;
+    }
 
-  const handleUploadPhotos = () => {
-    console.log("Upload photos");
-  };
+    setIsSubmitting(true);
 
-  const categoryTitle = params?.category
-    ? `${params.category} request`
-    : "Other Request";
+    try {
+      const resolvedUnitId =
+        unitId || (await resolveResidentUnitId(residentId));
+
+      if (!resolvedUnitId) {
+        Alert.alert(
+          "Error",
+          "Unit information is missing for your account. Please contact support.",
+        );
+        return;
+      }
+
+      if (!unitId) {
+        useAuthStore.setState({ unitId: resolvedUnitId });
+      }
+
+      await createMaintenanceRequest({
+        residentId,
+        unitId: resolvedUnitId,
+        title: resolvedTitle,
+        description: description.trim(),
+        category: mapCategoryToBackend(selectedCategory),
+        locationLabel: location,
+        priority: "NORMAL",
+        isPublic: false,
+        photoUrls: [],
+      });
+
+      Alert.alert("Success", "Your maintenance request has been submitted!", [
+        { text: "OK", onPress: () => navigation.goBack() },
+      ]);
+    } catch (error) {
+      const message =
+        axios.isAxiosError(error) &&
+        typeof error.response?.data === "object" &&
+        error.response?.data !== null &&
+        "message" in error.response.data &&
+        typeof error.response.data.message === "string"
+          ? error.response.data.message
+          : "Failed to submit request. Please try again.";
+      Alert.alert("Error", message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <View className="flex-1 bg-white">
-      {/* Header */}
       <View
         className="px-4 pb-4 border-b border-gray-100"
         style={{ paddingTop: insets.top + 12 }}
@@ -68,7 +136,7 @@ export default function RequestDetailsScreen() {
             <Ionicons name="arrow-back" size={24} color="#1F2937" />
           </TouchableOpacity>
           <Text className="text-xl font-semibold text-gray-800">
-            {categoryTitle}
+            Maintenance request
           </Text>
           <View className="w-10" />
         </View>
@@ -77,24 +145,42 @@ export default function RequestDetailsScreen() {
       <ScrollView
         className="flex-1 px-4 pt-6"
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 24 }}
       >
-        {/* Title Input - Only show for "Other" category */}
-        {params?.category === "Other" && (
-          <View className="mb-6">
-            <Text className="text-sm font-medium text-gray-700 mb-2">
-              Title
-            </Text>
-            <TextInput
-              value={title}
-              onChangeText={setTitle}
-              placeholder="Brief description of the issue"
-              placeholderTextColor="#9CA3AF"
-              className="bg-gray-50 rounded-xl px-4 py-3 text-gray-800 text-base"
+        <View className="mb-6">
+          <Text className="text-sm font-medium text-gray-700 mb-2">
+            Request Location
+          </Text>
+          <View className="flex-row gap-3">
+            <LocationTab
+              location="At Home"
+              isSelected={location === "At Home"}
+              onPress={() => setLocation("At Home")}
+            />
+            <LocationTab
+              location="Neighborhood"
+              isSelected={location === "Neighborhood"}
+              onPress={() => setLocation("Neighborhood")}
             />
           </View>
-        )}
+        </View>
 
-        {/* Description Input */}
+        <View className="mb-6">
+          <Text className="text-sm font-medium text-gray-700 mb-3">
+            Select Category
+          </Text>
+          <View className="flex-row flex-wrap justify-between">
+            {MAINTENANCE_CATEGORIES.map((category) => (
+              <CategoryButton
+                key={category.id}
+                category={category}
+                isSelected={selectedCategory === category.name}
+                onPress={() => onPickCategory(category.name)}
+              />
+            ))}
+          </View>
+        </View>
+
         <View className="mb-6">
           <Text className="text-sm font-medium text-gray-700 mb-2">
             Description
@@ -111,13 +197,14 @@ export default function RequestDetailsScreen() {
           />
         </View>
 
-        {/* Upload Photos */}
         <View className="mb-6">
           <Text className="text-sm font-medium text-gray-700 mb-2">
             Add Photos (Optional)
           </Text>
           <TouchableOpacity
-            onPress={handleUploadPhotos}
+            onPress={() =>
+              Alert.alert("Coming soon", "Photo upload will be available soon.")
+            }
             className="bg-gray-50 rounded-xl px-4 py-6 border-2 border-dashed border-gray-300 items-center"
             activeOpacity={0.7}
           >
@@ -125,20 +212,23 @@ export default function RequestDetailsScreen() {
             <Text className="text-gray-500 text-sm mt-2">Upload Photos</Text>
           </TouchableOpacity>
         </View>
-      </ScrollView>
 
-      {/* Submit Button */}
-      <View className="px-4 pb-6 pt-4 border-t border-gray-100">
         <TouchableOpacity
-          onPress={handleSubmit}
+          onPress={() => void handleSubmit()}
+          disabled={isSubmitting}
           className="bg-teal-500 rounded-2xl py-4 items-center"
           activeOpacity={0.8}
+          style={{ opacity: isSubmitting ? 0.75 : 1 }}
         >
-          <Text className="text-white text-base font-semibold">
-            Submit Request
-          </Text>
+          {isSubmitting ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <Text className="text-white text-base font-semibold">
+              Submit Request
+            </Text>
+          )}
         </TouchableOpacity>
-      </View>
+      </ScrollView>
     </View>
   );
 }

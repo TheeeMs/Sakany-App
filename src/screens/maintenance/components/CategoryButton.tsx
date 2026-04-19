@@ -4,11 +4,13 @@ import type { MaintenanceCategory } from "../types";
 
 interface CategoryButtonProps {
   category: MaintenanceCategory;
+  isSelected?: boolean;
   onPress: () => void;
 }
 
 export default function CategoryButton({
   category,
+  isSelected = false,
   onPress,
 }: CategoryButtonProps) {
   const getIconComponent = () => {
@@ -34,14 +36,21 @@ export default function CategoryButton({
     >
       <View
         className="w-28 h-20 rounded-2xl items-center justify-center py-4 px-2"
-        style={{ backgroundColor: category.backgroundColor }}
+        style={{
+          backgroundColor: isSelected ? "#14B8A6" : category.backgroundColor,
+          borderWidth: isSelected ? 2 : 0,
+          borderColor: isSelected ? "#0F766E" : "transparent",
+        }}
       >
         <IconComponent
           name={category.icon as any}
           size={28}
-          color={category.iconColor}
+          color={isSelected ? "#FFFFFF" : category.iconColor}
         />
-        <Text className="text-sm text-[#0D9488] text-center font-medium mt-2">
+        <Text
+          className="text-sm text-center font-medium mt-2"
+          style={{ color: isSelected ? "#FFFFFF" : "#0D9488" }}
+        >
           {category.name}
         </Text>
       </View>

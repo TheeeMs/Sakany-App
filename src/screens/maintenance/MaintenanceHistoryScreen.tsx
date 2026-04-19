@@ -1,66 +1,137 @@
-import React, { useState } from "react";
-import { View, Text, ScrollView, TouchableOpacity } from "react-native";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  Alert,
+  RefreshControl,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import type { MaintenanceRequest, RequestStatus } from "./types";
+import {
+  getMaintenanceRequestsByResident,
+  getMaintenanceRequestsByStatus,
+  type MaintenanceRequestApiItem,
+} from "../../services/maintenance";
+import { useAuthStore } from "../../store/authStore";
+import type { RootStackParamList } from "../../navigation";
+import type { CategoryType, MaintenanceRequest, RequestStatus } from "./types";
 import { ActiveRequestCard } from "./components";
 
 type FilterType = "All" | RequestStatus;
+type NavigationProp = NativeStackNavigationProp<
+  RootStackParamList,
+  "MaintenanceHistory"
+>;
+
+function toUiCategory(value: string | null | undefined): CategoryType {
+  const normalized = (value || "").trim().toLowerCase();
+  if (normalized.includes("plumb")) return "Plumbing";
+  if (normalized.includes("elect")) return "Electrical";
+  if (normalized.includes("ac") || normalized.includes("heat"))
+    return "AC/Heating";
+  if (normalized.includes("house")) return "Housekeeping";
+  if (normalized.includes("paint")) return "Painting";
+  if (normalized.includes("carpen")) return "Carpentry";
+  if (normalized.includes("garden")) return "Garden";
+  if (normalized.includes("alum")) return "Aluminum";
+  return "Other";
+}
+
+function toUiStatus(value: string | null | undefined): RequestStatus {
+  switch ((value || "").toUpperCase()) {
+    case "IN_PROGRESS":
+    case "ASSIGNED":
+      return "In Progress";
+    case "RESOLVED":
+    case "COMPLETED":
+      return "Completed";
+    case "REJECTED":
+      return "Rejected";
+    case "CANCELLED":
+      return "Cancelled";
+    default:
+      return "Pending";
+  }
+}
+
+function toUiRequest(item: MaintenanceRequestApiItem): MaintenanceRequest {
+  const created = item.createdAt ? new Date(item.createdAt) : null;
+  return {
+    id: item.id,
+    title: item.title?.trim() || "Maintenance Request",
+    category: toUiCategory(item.category),
+    description: item.description?.trim() || "No description provided",
+    location: (item.locationLabel ?? item.location ?? "")
+      .toUpperCase()
+      .includes("NEIGHBOR")
+      ? "Neighborhood"
+      : "At Home",
+    date: created
+      ? created.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        })
+      : "-",
+    status: toUiStatus(item.status),
+    apiStatus: item.status || undefined,
+    technician: item.technicianName?.trim() || item.technicianId || undefined,
+  };
+}
 
 export default function MaintenanceHistoryScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp>();
   const insets = useSafeAreaInsets();
+  const userId = useAuthStore((state) => state.user?.id);
+
   const [selectedFilter, setSelectedFilter] = useState<FilterType>("All");
+  const [requests, setRequests] = useState<MaintenanceRequest[]>([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const filters: FilterType[] = ["All", "In Progress", "Completed"];
 
-  // History Data
-  const historyRequests: MaintenanceRequest[] = [
-    {
-      id: "1",
-      title: "AC Not Working",
-      category: "AC/Heating",
-      description: "Air conditioner stopped cooling",
-      location: "At Home",
-      date: "Dec 5, 2024",
-      status: "Completed",
-      technician: "Mike Johnson",
-    },
-    {
-      id: "2",
-      title: "Kitchen Faucet Leak",
-      category: "Plumbing",
-      description: "Water leaking from kitchen sink",
-      location: "At Home",
-      date: "Nov 28, 2024",
-      status: "Completed",
-      technician: "John Smith",
-    },
-    {
-      id: "3",
-      title: "Leaking Faucet in Kitchen",
-      category: "Plumbing",
-      description: "Water leaking from kitchen sink faucet",
-      location: "At Home",
-      date: "Dec 15, 2024",
-      status: "In Progress",
-      technician: "John Smith",
-    },
-  ];
+  const loadRequests = useCallback(async () => {
+    if (!userId) {
+      return;
+    }
 
-  const filteredRequests =
-    selectedFilter === "All"
-      ? historyRequests
-      : historyRequests.filter((req) => req.status === selectedFilter);
+    setIsRefreshing(true);
 
-  const handleRequestPress = (request: MaintenanceRequest) => {
-    console.log("Request pressed:", request.id);
-  };
+    try {
+      if (selectedFilter === "All") {
+        const data = await getMaintenanceRequestsByResident(userId);
+        setRequests(data.map(toUiRequest));
+      } else {
+        const apiStatus =
+          selectedFilter === "Completed" ? "RESOLVED" : "IN_PROGRESS";
+        const data = await getMaintenanceRequestsByStatus(apiStatus);
+        const mine = data.filter((item) => item.residentId === userId);
+        setRequests(mine.map(toUiRequest));
+      }
+    } catch {
+      Alert.alert("Error", "Failed to load maintenance history.");
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [selectedFilter, userId]);
+
+  useEffect(() => {
+    void loadRequests();
+  }, [loadRequests]);
+
+  const filteredRequests = useMemo(() => {
+    if (selectedFilter === "All") {
+      return requests;
+    }
+    return requests.filter((req) => req.status === selectedFilter);
+  }, [requests, selectedFilter]);
 
   return (
-    <View className="flex-1 bg-gray-50">
-      {/* Header */}
+    <View className="flex-1 bg-[#F8FAFC]">
       <View
         className="bg-white px-4 pb-4 border-b border-gray-100"
         style={{ paddingTop: insets.top + 12 }}
@@ -77,7 +148,6 @@ export default function MaintenanceHistoryScreen() {
         </View>
       </View>
 
-      {/* Filter Tabs */}
       <View className="bg-white px-4 py-3 border-b border-gray-100">
         <ScrollView
           horizontal
@@ -105,9 +175,14 @@ export default function MaintenanceHistoryScreen() {
         </ScrollView>
       </View>
 
-      {/* History List */}
       <ScrollView
         className="flex-1 px-4 pt-4"
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={() => void loadRequests()}
+          />
+        }
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 20 }}
       >
@@ -116,7 +191,7 @@ export default function MaintenanceHistoryScreen() {
             <ActiveRequestCard
               key={request.id}
               request={request}
-              onPress={() => handleRequestPress(request)}
+              onPress={() => Alert.alert(request.title, request.description)}
             />
           ))
         ) : (

@@ -13,7 +13,10 @@ import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { createMaintenanceRequest } from "../../services/maintenance";
+import {
+  createMaintenanceRequest,
+  resolveResidentUnitId,
+} from "../../services/maintenance";
 import type { RootStackParamList } from "../../navigation";
 import { useAuthStore } from "../../store/authStore";
 import type { CategoryType, RequestLocation } from "./types";
@@ -59,20 +62,27 @@ export default function OtherRequestScreen() {
       return;
     }
 
-    if (!unitId) {
-      Alert.alert(
-        "Error",
-        "Unit information is missing for your account. Please sign in again or contact support.",
-      );
-      return;
-    }
-
     setIsSubmitting(true);
 
     try {
+      const resolvedUnitId =
+        unitId || (await resolveResidentUnitId(residentId));
+
+      if (!resolvedUnitId) {
+        Alert.alert(
+          "Error",
+          "Unit information is missing for your account. Please contact support.",
+        );
+        return;
+      }
+
+      if (!unitId) {
+        useAuthStore.setState({ unitId: resolvedUnitId });
+      }
+
       await createMaintenanceRequest({
         residentId,
-        unitId,
+        unitId: resolvedUnitId,
         title: title.trim(),
         description: description.trim(),
         category: mapCategoryToBackend("Other"),

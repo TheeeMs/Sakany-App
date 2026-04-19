@@ -118,3 +118,8 @@ export async function getMaintenanceRequestsByResident(residentId: string) {
   );
   return data;
 }
+
+export async function resolveResidentUnitId(residentId: string) {
+  const requests = await getMaintenanceRequestsByResident(residentId);
+  return requests.find((item) => !!item.unitId)?.unitId ?? null;
+}

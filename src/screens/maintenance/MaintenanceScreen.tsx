@@ -1,129 +1,225 @@
-import React, { useState } from "react";
-import { View, Text, ScrollView, TouchableOpacity } from "react-native";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  Alert,
+  type AlertButton,
+  RefreshControl,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
-
-// Types
+import {
+  cancelMaintenanceRequest,
+  getMaintenanceRequestById,
+  getMaintenanceRequestsByResident,
+  rejectMaintenanceRequest,
+  resolveMaintenanceRequest,
+  startMaintenanceRequest,
+  type MaintenanceRequestApiItem,
+} from "../../services/maintenance";
+import { useAuthStore } from "../../store/authStore";
+import type { RootStackParamList } from "../../navigation";
 import type {
-  RequestLocation,
-  MaintenanceCategory,
+  CategoryType,
   MaintenanceRequest,
+  RequestLocation,
+  RequestStatus,
 } from "./types";
+import { ActiveRequestCard } from "./components";
 
-// Components
-import { LocationTab, CategoryButton, ActiveRequestCard } from "./components";
+type NavigationProp = NativeStackNavigationProp<RootStackParamList, "Main">;
+
+function toUiLocation(value: string | null | undefined): RequestLocation {
+  const normalized = (value || "").toUpperCase();
+  if (normalized.includes("NEIGHBOR")) {
+    return "Neighborhood";
+  }
+  return "At Home";
+}
+
+function toUiStatus(value: string | null | undefined): RequestStatus {
+  switch ((value || "").toUpperCase()) {
+    case "IN_PROGRESS":
+    case "ASSIGNED":
+    case "STARTED":
+      return "In Progress";
+    case "RESOLVED":
+    case "COMPLETED":
+      return "Completed";
+    case "REJECTED":
+      return "Rejected";
+    case "CANCELLED":
+      return "Cancelled";
+    default:
+      return "Pending";
+  }
+}
+
+function toUiCategory(value: string | null | undefined): CategoryType {
+  const normalized = (value || "").trim().toLowerCase();
+
+  if (normalized.includes("plumb")) return "Plumbing";
+  if (normalized.includes("elect")) return "Electrical";
+  if (normalized.includes("ac") || normalized.includes("heat"))
+    return "AC/Heating";
+  if (normalized.includes("house")) return "Housekeeping";
+  if (normalized.includes("paint")) return "Painting";
+  if (normalized.includes("carpen")) return "Carpentry";
+  if (normalized.includes("garden")) return "Garden";
+  if (normalized.includes("alum")) return "Aluminum";
+
+  return "Other";
+}
+
+function toUiRequest(item: MaintenanceRequestApiItem): MaintenanceRequest {
+  const created = item.createdAt ? new Date(item.createdAt) : null;
+
+  return {
+    id: item.id,
+    title: item.title?.trim() || "Maintenance Request",
+    category: toUiCategory(item.category),
+    description: item.description?.trim() || "No description provided",
+    location: toUiLocation(item.locationLabel ?? item.location),
+    date: created
+      ? created.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        })
+      : "-",
+    status: toUiStatus(item.status),
+    apiStatus: item.status || undefined,
+    technician: item.technicianName?.trim() || item.technicianId || undefined,
+  };
+}
 
 export default function MaintenanceScreen() {
-  const navigation = useNavigation();
-  const [selectedLocation, setSelectedLocation] =
-    useState<RequestLocation>("At Home");
+  const navigation = useNavigation<NavigationProp>();
+  const userId = useAuthStore((state) => state.user?.id);
 
-  // Categories Data
-  const categories: MaintenanceCategory[] = [
-    {
-      id: "1",
-      name: "Plumbing",
-      icon: "water-outline",
-      backgroundColor: "#C7F5F3",
-      iconColor: "#0D9488",
-    },
-    {
-      id: "2",
-      name: "Electrical",
-      icon: "flash-outline",
-      backgroundColor: "#C7F5F3",
-      iconColor: "#0D9488",
-    },
-    {
-      id: "3",
-      name: "AC/Heating",
-      icon: "air",
-      backgroundColor: "#C7F5F3",
-      iconColor: "#0D9488",
-    },
-    {
-      id: "4",
-      name: "Housekeeping",
-      icon: "star-four-points-outline",
-      backgroundColor: "#C7F5F3",
-      iconColor: "#0D9488",
-    },
-    {
-      id: "5",
-      name: "Painting",
-      icon: "brush-outline",
-      backgroundColor: "#C7F5F3",
-      iconColor: "#0D9488",
-    },
-    {
-      id: "6",
-      name: "Carpentry",
-      icon: "hammer-outline",
-      backgroundColor: "#C7F5F3",
-      iconColor: "#0D9488",
-    },
-    {
-      id: "7",
-      name: "Garden",
-      icon: "flower-outline",
-      backgroundColor: "#C7F5F3",
-      iconColor: "#0D9488",
-    },
-    {
-      id: "8",
-      name: "Aluminum",
-      icon: "cube-outline",
-      backgroundColor: "#C7F5F3",
-      iconColor: "#0D9488",
-    },
-    {
-      id: "9",
-      name: "Other",
-      icon: "help-circle-outline",
-      backgroundColor: "#C7F5F3",
-      iconColor: "#0D9488",
-    },
-  ];
+  const [requests, setRequests] = useState<MaintenanceRequest[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Active Maintenance Requests
-  const activeRequests: MaintenanceRequest[] = [
-    {
-      id: "1",
-      title: "Leaking Faucet in Kitchen",
-      category: "Plumbing",
-      description: "Water leaking from kitchen sink faucet",
-      location: "At Home",
-      date: "Dec 15, 2024",
-      status: "In Progress",
-      technician: "John Smith",
-    },
-    {
-      id: "2",
-      title: "Broken Elevator in Building A",
-      category: "Other",
-      description: "Elevator not working properly",
-      location: "Neighborhood",
-      date: "Dec 12, 2024",
-      status: "Pending",
-    },
-  ];
+  const loadRequests = useCallback(
+    async (refresh = false) => {
+      if (!userId) {
+        return;
+      }
 
-  const handleCategoryPress = (category: MaintenanceCategory) => {
-    // Navigate to request details screen
-    (navigation as any).navigate("RequestDetails", { category: category.name });
+      if (refresh) {
+        setIsRefreshing(true);
+      } else {
+        setIsLoading(true);
+      }
+
+      try {
+        const data = await getMaintenanceRequestsByResident(userId);
+        setRequests(data.map(toUiRequest));
+      } catch {
+        Alert.alert("Error", "Failed to load maintenance requests.");
+      } finally {
+        setIsLoading(false);
+        setIsRefreshing(false);
+      }
+    },
+    [userId],
+  );
+
+  useEffect(() => {
+    void loadRequests();
+  }, [loadRequests]);
+
+  const activeRequests = useMemo(
+    () =>
+      requests.filter(
+        (request) =>
+          request.status === "Pending" || request.status === "In Progress",
+      ),
+    [requests],
+  );
+
+  const executeActionAndReload = async (
+    action: () => Promise<unknown>,
+    successMessage: string,
+  ) => {
+    try {
+      await action();
+      Alert.alert("Done", successMessage);
+      await loadRequests();
+    } catch {
+      Alert.alert("Error", "Action failed. Please try again.");
+    }
   };
 
-  const handleRequestPress = (request: MaintenanceRequest) => {
-    console.log("Request pressed:", request.id);
-  };
+  const handleRequestPress = async (request: MaintenanceRequest) => {
+    try {
+      const details = await getMaintenanceRequestById(request.id);
+      const normalizedStatus = toUiStatus(details.status);
 
-  const handleHistoryPress = () => {
-    (navigation as any).navigate("MaintenanceHistory");
+      const actions: AlertButton[] = [
+        { text: "Close", style: "cancel" as const },
+      ];
+
+      if (normalizedStatus === "Pending") {
+        actions.push({
+          text: "Start",
+          onPress: () =>
+            void executeActionAndReload(
+              () => startMaintenanceRequest(request.id),
+              "Request moved to in progress.",
+            ),
+        });
+        actions.push({
+          text: "Reject",
+          onPress: () =>
+            void executeActionAndReload(
+              () => rejectMaintenanceRequest(request.id),
+              "Request rejected.",
+            ),
+        });
+      }
+
+      if (normalizedStatus === "In Progress") {
+        actions.push({
+          text: "Resolve",
+          onPress: () =>
+            void executeActionAndReload(
+              () => resolveMaintenanceRequest(request.id),
+              "Request resolved.",
+            ),
+        });
+      }
+
+      if (
+        normalizedStatus === "Pending" ||
+        normalizedStatus === "In Progress"
+      ) {
+        actions.push({
+          text: "Cancel",
+          onPress: () =>
+            void executeActionAndReload(
+              () => cancelMaintenanceRequest(request.id),
+              "Request cancelled.",
+            ),
+        });
+      }
+
+      Alert.alert(
+        request.title,
+        `Status: ${normalizedStatus}\nCategory: ${request.category}`,
+        actions,
+      );
+    } catch {
+      Alert.alert("Error", "Failed to load request details.");
+    }
   };
 
   return (
-    <View className="flex-1 bg-gray-50">
-      {/* Header */}
+    <View className="flex-1 bg-[#F8FAFC]">
       <View className="bg-white px-4 pt-12 pb-4 border-b border-gray-100">
         <View className="flex-row items-center justify-between">
           <TouchableOpacity
@@ -134,7 +230,7 @@ export default function MaintenanceScreen() {
           </TouchableOpacity>
           <Text className="text-xl font-bold text-gray-800">Maintenance</Text>
           <TouchableOpacity
-            onPress={handleHistoryPress}
+            onPress={() => navigation.navigate("MaintenanceHistory")}
             className="w-10 h-10 items-center justify-center"
           >
             <Ionicons name="time-outline" size={24} color="#0D9488" />
@@ -144,67 +240,69 @@ export default function MaintenanceScreen() {
 
       <ScrollView
         className="flex-1"
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={() => void loadRequests(true)}
+          />
+        }
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 20 }}
       >
-        {/* Request Location */}
-        <View className="px-4 pt-6 pb-4">
-          <Text className="text-sm font-semibold text-gray-700 mb-3">
-            Request Location
-          </Text>
-          <View className="flex-row gap-3">
-            <LocationTab
-              location="At Home"
-              isSelected={selectedLocation === "At Home"}
-              onPress={() => setSelectedLocation("At Home")}
-            />
-            <LocationTab
-              location="Neighborhood"
-              isSelected={selectedLocation === "Neighborhood"}
-              onPress={() => setSelectedLocation("Neighborhood")}
-            />
+        <TouchableOpacity
+          onPress={() => navigation.navigate("RequestDetails")}
+          activeOpacity={0.85}
+          className="mx-4 mt-[15px] h-[127px] bg-[#DFF5F3] rounded-[20px] px-5 py-[16px] border border-[#BCE9E5] overflow-hidden"
+        >
+          <View className="absolute -right-8 -top-6 w-[130px] h-[130px] rounded-full bg-[#CFF1EC]" />
+          <View className="absolute -right-16 top-12 w-[140px] h-[140px] rounded-full bg-[#C6EBE5]" />
+          <View className="flex-row items-center justify-between h-full">
+            <View className="w-[90px] h-[95px] rounded-[14px] bg-[#00A996] items-center justify-center shadow-sm">
+              <Ionicons name="add" size={42} color="#FFFFFF" />
+            </View>
+            <View className="w-[203px]">
+              <Text className="text-[#0F172A] text-[20px] font-bold leading-6">
+                Create a new request
+              </Text>
+              <Text className="text-[#64748B] text-[14px] leading-5 mt-2">
+                Tap here to start a new maintenance request.
+              </Text>
+            </View>
           </View>
-        </View>
+        </TouchableOpacity>
 
-        {/* Select Category */}
-        <View className="px-4 pb-4">
-          <Text className="text-sm font-semibold text-gray-700 mb-3">
-            Select Category
-          </Text>
-          <View className="flex-row flex-wrap justify-between">
-            {categories.map((category) => (
-              <CategoryButton
-                key={category.id}
-                category={category}
-                onPress={() => handleCategoryPress(category)}
-              />
-            ))}
-          </View>
-        </View>
-
-        {/* Active Maintenance */}
-        <View className="px-4">
+        <View className="px-4 mt-[22px]">
           <View className="flex-row items-center justify-between mb-4">
-            <Text className="text-lg font-bold text-gray-900">
+            <Text className="text-[20px] font-bold text-[#111827]">
               Active Maintenance
             </Text>
             <TouchableOpacity
-              onPress={handleHistoryPress}
+              onPress={() => navigation.navigate("MaintenanceHistory")}
               className="flex-row items-center"
+              activeOpacity={0.8}
             >
-              <Text className="text-sm font-semibold text-[#0D9488] mr-1">
+              <Text className="text-[14px] font-semibold text-[#0D9488] mr-1">
                 View all
               </Text>
-              <Ionicons name="chevron-forward" size={20} color="#0D9488" />
+              <Ionicons name="chevron-forward" size={18} color="#0D9488" />
             </TouchableOpacity>
           </View>
-          {activeRequests.map((request) => (
-            <ActiveRequestCard
-              key={request.id}
-              request={request}
-              onPress={() => handleRequestPress(request)}
-            />
-          ))}
+
+          {isLoading ? (
+            <Text className="text-center text-gray-500 py-8">Loading...</Text>
+          ) : activeRequests.length === 0 ? (
+            <Text className="text-center text-gray-500 py-8">
+              No active maintenance requests.
+            </Text>
+          ) : (
+            activeRequests.map((request) => (
+              <ActiveRequestCard
+                key={request.id}
+                request={request}
+                onPress={() => void handleRequestPress(request)}
+              />
+            ))
+          )}
         </View>
       </ScrollView>
     </View>
