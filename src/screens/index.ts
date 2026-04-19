@@ -32,6 +32,11 @@ export { default as CreatePostScreen } from "./feedback/CreatePostScreen";
 // Profile
 export { default as ProfileScreen } from "./profile/ProfileScreen";
 
+// Auth
+export { default as GetStartedScreen } from "./auth/GetStartedScreen";
+export { default as LoginScreen } from "./auth/LoginScreen";
+export { default as PhoneLoginScreen } from "./auth/PhoneLoginScreen";
+export { default as RegisterScreen } from "./auth/RegisterScreen";
 
 export { default as NotificationScreen } from "./notifications/NotificationScreen";
 
@@ -39,4 +44,3 @@ export { default as NotificationScreen } from "./notifications/NotificationScree
 export { default as EventsScreen } from "./events/EventsScreen";
 export { default as EventDetailsScreen } from "./events/EventDetailsScreen";
 export { default as CreateEventScreen } from "./events/CreateEventScreen";
-
