@@ -22,6 +22,50 @@ function isEmailValid(value: string) {
   return /^\S+@\S+\.\S+$/.test(value);
 }
 
+function normalizeDigits(value: string) {
+  const arabicIndic = "٠١٢٣٤٥٦٧٨٩";
+  const easternArabicIndic = "۰۱۲۳۴۵۶۷۸۹";
+
+  return value
+    .split("")
+    .map((char) => {
+      const indexArabic = arabicIndic.indexOf(char);
+      if (indexArabic >= 0) {
+        return String(indexArabic);
+      }
+
+      const indexEastern = easternArabicIndic.indexOf(char);
+      if (indexEastern >= 0) {
+        return String(indexEastern);
+      }
+
+      return char;
+    })
+    .join("");
+}
+
+function sanitizePhone(value: string) {
+  return normalizeDigits(value).replace(/\D/g, "");
+}
+
+function toEgyptInternationalPhone(phoneValue: string) {
+  const digits = sanitizePhone(phoneValue);
+
+  if (!digits) {
+    return "";
+  }
+
+  if (digits.startsWith("20")) {
+    return `+${digits}`;
+  }
+
+  if (digits.startsWith("0")) {
+    return `+2${digits}`;
+  }
+
+  return `+20${digits}`;
+}
+
 function isUuid(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
     value,
@@ -51,6 +95,11 @@ export default function RegisterScreen() {
   const passwordMatches = useMemo(
     () => confirmPassword.length > 0 && password === confirmPassword,
     [password, confirmPassword],
+  );
+
+  const normalizedPhone = useMemo(
+    () => toEgyptInternationalPhone(phoneNumber),
+    [phoneNumber],
   );
 
   const isFormValid = useMemo(
@@ -84,7 +133,7 @@ export default function RegisterScreen() {
       await registerWithEmailPassword({
         firstName: firstName.trim(),
         lastName: lastName.trim(),
-        phoneNumber: phoneNumber.trim(),
+        phoneNumber: normalizedPhone,
         email: email.trim(),
         password,
         type: residentType,

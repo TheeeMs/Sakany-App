@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import axios from "axios";
 import {
   ActivityIndicator,
@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -25,45 +25,33 @@ import { CategoryButton, LocationTab } from "./components";
 
 type NavigationProp = NativeStackNavigationProp<
   RootStackParamList,
-  "RequestDetails"
+  "OtherRequest"
 >;
 
-interface RouteParams {
-  category?: CategoryType;
-}
-
-export default function RequestDetailsScreen() {
+export default function OtherRequestScreen() {
   const navigation = useNavigation<NavigationProp>();
-  const route = useRoute();
   const insets = useSafeAreaInsets();
-  const params = (route.params || {}) as RouteParams;
   const residentId = useAuthStore((state) => state.user?.id);
   const unitId = useAuthStore((state) => state.unitId);
 
   const [location, setLocation] = useState<RequestLocation>("At Home");
-  const [selectedCategory, setSelectedCategory] = useState<CategoryType>(
-    params.category && params.category !== "Other"
-      ? params.category
-      : "Plumbing",
-  );
+  const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const resolvedTitle = useMemo(
-    () => `${selectedCategory} request`,
-    [selectedCategory],
-  );
-
   const onPickCategory = (category: CategoryType) => {
     if (category === "Other") {
-      navigation.navigate("OtherRequest", { category: "Other" });
       return;
     }
-
-    setSelectedCategory(category);
+    navigation.navigate("RequestDetails", { category });
   };
 
   const handleSubmit = async () => {
+    if (!title.trim()) {
+      Alert.alert("Error", "Please enter a title");
+      return;
+    }
+
     if (!description.trim()) {
       Alert.alert("Error", "Please provide a description");
       return;
@@ -95,9 +83,9 @@ export default function RequestDetailsScreen() {
       await createMaintenanceRequest({
         residentId,
         unitId: resolvedUnitId,
-        title: resolvedTitle,
+        title: title.trim(),
         description: description.trim(),
-        category: mapCategoryToBackend(selectedCategory),
+        category: mapCategoryToBackend("Other"),
         locationLabel: location,
         priority: "NORMAL",
         isPublic: false,
@@ -136,7 +124,7 @@ export default function RequestDetailsScreen() {
             <Ionicons name="arrow-back" size={24} color="#1F2937" />
           </TouchableOpacity>
           <Text className="text-xl font-semibold text-gray-800">
-            Maintenance request
+            Other request
           </Text>
           <View className="w-10" />
         </View>
@@ -174,11 +162,22 @@ export default function RequestDetailsScreen() {
               <CategoryButton
                 key={category.id}
                 category={category}
-                isSelected={selectedCategory === category.name}
+                isSelected={category.name === "Other"}
                 onPress={() => onPickCategory(category.name)}
               />
             ))}
           </View>
+        </View>
+
+        <View className="mb-6">
+          <Text className="text-sm font-medium text-gray-700 mb-2">Title</Text>
+          <TextInput
+            value={title}
+            onChangeText={setTitle}
+            placeholder="Brief description of the issue"
+            placeholderTextColor="#9CA3AF"
+            className="bg-gray-50 rounded-xl px-4 py-3 text-gray-800 text-base"
+          />
         </View>
 
         <View className="mb-6">

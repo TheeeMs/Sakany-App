@@ -24,6 +24,11 @@ const STATUS_CONFIG: Record<
     text: "Cancelled",
     textColor: "#991B1B",
   },
+  Rejected: {
+    bg: "#FCE7F3",
+    text: "Rejected",
+    textColor: "#9D174D",
+  },
   Pending: {
     bg: "#FEF3C7",
     text: "Pending",

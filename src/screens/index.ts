@@ -16,6 +16,7 @@ export { default as CreateReportScreen } from "./missing-found/CreateReportScree
 // Maintenance
 export { default as MaintenanceScreen } from "./maintenance/MaintenanceScreen";
 export { default as RequestDetailsScreen } from "./maintenance/RequestDetailsScreen";
+export { default as OtherRequestScreen } from "./maintenance/OtherRequestScreen";
 export { default as MaintenanceHistoryScreen } from "./maintenance/MaintenanceHistoryScreen";
 
 // Payment

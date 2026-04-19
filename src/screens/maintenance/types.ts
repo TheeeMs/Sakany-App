@@ -16,12 +16,14 @@ export type CategoryType =
 export type RequestStatus =
   | "In Progress"
   | "Completed"
+  | "Rejected"
   | "Cancelled"
   | "Pending";
 
 export interface MaintenanceCategory {
   id: string;
   name: CategoryType;
+  backendName: string;
   icon: string;
   backgroundColor: string;
   iconColor: string;
@@ -35,6 +37,7 @@ export interface MaintenanceRequest {
   location: RequestLocation;
   date: string;
   status: RequestStatus;
+  apiStatus?: string;
   technician?: string;
   photos?: string[];
 }

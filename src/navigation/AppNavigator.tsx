@@ -18,6 +18,7 @@ import {
   CreatePostScreen,
   MaintenanceScreen,
   RequestDetailsScreen,
+  OtherRequestScreen,
   MaintenanceHistoryScreen,
   PaymentScreen,
   PaymentDetailsScreen,
@@ -52,7 +53,8 @@ export type RootStackParamList = {
   Events: undefined;
   EventDetails: { eventId: string };
   CreateEvent: undefined;
-  RequestDetails: { category: string };
+  RequestDetails: { category?: string } | undefined;
+  OtherRequest: { category?: string } | undefined;
   MaintenanceHistory: undefined;
   PaymentDetails: { payment: Payment };
   PaymentStatistics: undefined;
@@ -188,6 +190,11 @@ export default function AppNavigator() {
           <Stack.Screen
             name="RequestDetails"
             component={RequestDetailsScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="OtherRequest"
+            component={OtherRequestScreen}
             options={{ headerShown: false }}
           />
           <Stack.Screen

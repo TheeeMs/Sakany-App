@@ -17,6 +17,7 @@ interface AuthState {
   accessToken: string | null;
   refreshToken: string | null;
   user: CurrentUser | null;
+  unitId: string | null;
   isLoading: boolean;
   error: string | null;
   isAuthenticated: boolean;
@@ -94,6 +95,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   accessToken: null,
   refreshToken: null,
   user: null,
+  unitId: null,
   isLoading: false,
   error: null,
   isAuthenticated: false,
@@ -127,7 +129,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       });
 
       const me = await getCurrentUser();
-      set({ user: me, isLoading: false });
+      const meUnitId =
+        (me as CurrentUser & { unitId?: string | null }).unitId ||
+        get().unitId ||
+        null;
+      set({ user: me, unitId: meUnitId, isLoading: false });
     } catch (error) {
       setApiAccessToken(null);
       set({
@@ -156,7 +162,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       });
 
       const me = await getCurrentUser();
-      set({ user: me, isLoading: false });
+      const meUnitId =
+        (me as CurrentUser & { unitId?: string | null }).unitId ||
+        get().unitId ||
+        null;
+      set({ user: me, unitId: meUnitId, isLoading: false });
     } catch (error) {
       setApiAccessToken(null);
       set({
@@ -199,11 +209,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({
         accessToken: auth.accessToken,
         refreshToken: auth.refreshToken,
+        unitId,
         isAuthenticated: true,
       });
 
       const me = await getCurrentUser();
-      set({ user: me, isLoading: false });
+      const meUnitId =
+        (me as CurrentUser & { unitId?: string | null }).unitId || unitId;
+      set({ user: me, unitId: meUnitId, isLoading: false });
     } catch (error) {
       setApiAccessToken(null);
       set({
@@ -229,7 +242,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       setApiAccessToken(token);
       const me = await getCurrentUser();
-      set({ user: me, isLoading: false, isAuthenticated: true });
+      const meUnitId =
+        (me as CurrentUser & { unitId?: string | null }).unitId ||
+        get().unitId ||
+        null;
+      set({
+        user: me,
+        unitId: meUnitId,
+        isLoading: false,
+        isAuthenticated: true,
+      });
     } catch (error) {
       set({
         isLoading: false,
@@ -252,11 +274,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       setApiAccessToken(auth.accessToken);
 
       const me = await getCurrentUser();
+      const meUnitId =
+        (me as CurrentUser & { unitId?: string | null }).unitId ||
+        get().unitId ||
+        null;
 
       set({
         accessToken: auth.accessToken,
         refreshToken: auth.refreshToken,
         user: me,
+        unitId: meUnitId,
         isAuthenticated: true,
         isLoading: false,
       });
@@ -268,6 +295,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         accessToken: null,
         refreshToken: null,
         user: null,
+        unitId: null,
         isAuthenticated: false,
         isLoading: false,
       });
@@ -281,6 +309,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       accessToken: null,
       refreshToken: null,
       user: null,
+      unitId: null,
       error: null,
       isAuthenticated: false,
     });
