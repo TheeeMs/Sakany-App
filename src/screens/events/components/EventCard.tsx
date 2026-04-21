@@ -5,12 +5,27 @@ import type { Event } from "../types";
 
 interface EventCardProps {
   event: Event;
+  isOwnEvent?: boolean;
+  isJoined: boolean;
+  isJoinLoading?: boolean;
   onPress: (id: string) => void;
+  onJoin: (id: string) => void;
 }
 
-export default function EventCard({ event, onPress }: EventCardProps) {
+export default function EventCard({
+  event,
+  isOwnEvent = false,
+  isJoined,
+  isJoinLoading = false,
+  onPress,
+  onJoin,
+}: EventCardProps) {
   const isPast = event.isPast;
   const isFree = event.price === 0;
+  const isFull =
+    typeof event.maxAttendees === "number" &&
+    event.maxAttendees > 0 &&
+    event.attendeesCount >= event.maxAttendees;
 
   return (
     <TouchableOpacity
@@ -20,9 +35,9 @@ export default function EventCard({ event, onPress }: EventCardProps) {
     >
       {/* Image */}
       <View className="relative h-48 w-full">
-        {event.image ? (
+        {event.imageUrl ? (
           <Image
-            source={event.image}
+            source={{ uri: event.imageUrl }}
             className="w-full h-full"
             resizeMode="cover"
           />
@@ -46,7 +61,7 @@ export default function EventCard({ event, onPress }: EventCardProps) {
           {event.title}
         </Text>
         <Text className="text-[#00a693] text-sm font-medium mb-4">
-          Hosted by {event.host}
+          Hosted by {event.hostName}
         </Text>
 
         <Text
@@ -63,13 +78,13 @@ export default function EventCard({ event, onPress }: EventCardProps) {
             <View className="flex-1 flex-row items-start">
               <Ionicons name="calendar-outline" size={16} color="#6B7280" />
               <Text className="text-xs text-gray-600 font-medium ml-2 flex-1">
-                {event.date}
+                {event.dateLabel}
               </Text>
             </View>
             <View className="flex-1 flex-row items-start">
               <Ionicons name="time-outline" size={16} color="#6B7280" />
               <Text className="text-xs text-gray-600 font-medium ml-2 flex-1">
-                {event.time}
+                {event.timeLabel}
               </Text>
             </View>
           </View>
@@ -88,7 +103,7 @@ export default function EventCard({ event, onPress }: EventCardProps) {
             <View className="flex-1 flex-row items-start">
               <Ionicons name="people-outline" size={16} color="#6B7280" />
               <Text className="text-xs text-gray-600 font-medium ml-2 flex-1">
-                {event.attendeesCount} / {event.maxAttendees} joined
+                {event.attendeesCount} / {event.maxAttendees ?? "-"} joined
               </Text>
             </View>
           </View>
@@ -97,14 +112,29 @@ export default function EventCard({ event, onPress }: EventCardProps) {
         {/* Action Buttons */}
         <View className="flex-row items-center">
           <TouchableOpacity
-            disabled={isPast}
+            disabled={
+              isOwnEvent || isPast || isFull || isJoined || isJoinLoading
+            }
+            onPress={() => onJoin(event.id)}
             activeOpacity={0.8}
             className={`flex-1 py-3.5 rounded-xl items-center justify-center ${
-              isPast ? "bg-gray-400" : "bg-[#00a693]"
+              isOwnEvent || isPast || isFull || isJoined || isJoinLoading
+                ? "bg-gray-400"
+                : "bg-[#00a693]"
             }`}
           >
             <Text className="text-white font-bold text-base">
-              {isPast ? "Event Ended" : event.isJoined ? "Joined" : "Join"}
+              {isOwnEvent
+                ? "Your Event"
+                : isPast
+                  ? "Event Ended"
+                  : isFull
+                    ? "Full"
+                    : isJoinLoading
+                      ? "Joining..."
+                      : isJoined
+                        ? "Joined"
+                        : "Join"}
             </Text>
           </TouchableOpacity>
 

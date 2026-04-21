@@ -51,7 +51,7 @@ export type RootStackParamList = {
   PrivateFeedback: undefined;
   CreatePost: undefined;
   Events: undefined;
-  EventDetails: { eventId: string };
+  EventDetails: { eventId: string; isJoined?: boolean };
   CreateEvent: undefined;
   RequestDetails: { category?: string } | undefined;
   OtherRequest: { category?: string } | undefined;

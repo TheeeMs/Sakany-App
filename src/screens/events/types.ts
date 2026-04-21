@@ -1,17 +1,30 @@
 export interface Event {
   id: string;
+  organizerId: string;
   title: string;
-  host: string;
+  hostName: string;
   description: string;
-  image?: any;
-  date: string;
-  time: string;
+  imageUrl: string | null;
+  dateLabel: string;
+  timeLabel: string;
   location: string;
   attendeesCount: number;
-  maxAttendees: number;
+  maxAttendees: number | null;
   price: number;
-  isJoined: boolean;
   isPast: boolean;
+  startDate: string;
+  endDate: string;
+  category: string | null;
+  hostRole: string | null;
+  contactPhone: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  tags: string | null;
+  recurringEvent: boolean;
+  status: string;
+  approvedBy: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export type EventTabType = "upcoming" | "past";
