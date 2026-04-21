@@ -462,15 +462,15 @@ export default function CreateEventScreen() {
               <View className="w-[1px] h-9 bg-gray-200" />
 
               {/* Hour/Day Toggle */}
-              <View className="p-1.5 bg-gray-50 m-1 rounded-[10px] flex-row">
+              <View className="h-8 w-[110px] mr-2 bg-[#F8FAFC] border border-gray-200 rounded-lg p-0.5 flex-row">
                 <TouchableOpacity
                   onPress={() => setDurationUnit("Hour")}
-                  className={`px-4 py-2 rounded-lg ${
+                  className={`flex-1 h-full rounded-md items-center justify-center ${
                     durationUnit === "Hour" ? "bg-[#00a693]" : "bg-transparent"
                   }`}
                 >
                   <Text
-                    className={`text-[15px] font-medium ${
+                    className={`text-[13px] leading-4 font-medium ${
                       durationUnit === "Hour" ? "text-white" : "text-gray-500"
                     }`}
                   >
@@ -480,12 +480,12 @@ export default function CreateEventScreen() {
 
                 <TouchableOpacity
                   onPress={() => setDurationUnit("Day")}
-                  className={`px-4 py-2 rounded-lg ${
+                  className={`flex-1 h-full rounded-md items-center justify-center ${
                     durationUnit === "Day" ? "bg-[#00a693]" : "bg-transparent"
                   }`}
                 >
                   <Text
-                    className={`text-[15px] font-medium ${
+                    className={`text-[13px] leading-4 font-medium ${
                       durationUnit === "Day" ? "text-white" : "text-gray-500"
                     }`}
                   >
