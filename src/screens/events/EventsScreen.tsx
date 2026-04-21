@@ -1,115 +1,193 @@
-import React, { useState } from "react";
-import { View, Text, TouchableOpacity, ScrollView } from "react-native";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  Alert,
+  RefreshControl,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../../navigation/AppNavigator";
 import { Ionicons } from "@expo/vector-icons";
+import axios from "axios";
 import EventCard from "./components/EventCard";
 import type { Event, EventTabType } from "./types";
+import { mapEventDtoToUi } from "./mappers";
+import { getEvents, registerForEvent } from "../../services/events";
+import { useAuthStore } from "../../store/authStore";
 
 type EventsScreenNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
   "Events"
 >;
 
-const EVENT_IMAGE = require("../../../assets/build.png");
-
-const UPCOMING_EVENTS: Event[] = [
-  {
-    id: "1",
-    title: "Community BBQ Party",
-    host: "Sakane Community Management",
-    description:
-      "Join your neighbors for an evening of grilled food, music, and fun. Vegetarian options available!",
-    image: EVENT_IMAGE,
-    date: "Mon, Dec 10, 2025",
-    time: "6:00 PM - 9:00 PM",
-    location: "Rooftop Garden, Gate 3",
-    attendeesCount: 45,
-    maxAttendees: 60,
-    price: 0,
-    isJoined: true,
-    isPast: false,
-  },
-  {
-    id: "2",
-    title: "Paid Workshop (Art/Kids)",
-    host: "The Creative Corner",
-    description:
-      "A fun hands-on clay modeling session for kids aged 6-12. All materials are included, and they ge...",
-    image: EVENT_IMAGE,
-    date: "Sun, Dec 22, 2025",
-    time: "4:00 PM - 6:00 PM",
-    location: "Community Center, Hall B",
-    attendeesCount: 10,
-    maxAttendees: 15,
-    price: 15,
-    isJoined: false,
-    isPast: false,
-  },
-  {
-    id: "3",
-    title: "Annual Residents' Meeting",
-    host: "Sakane Management Board",
-    description:
-      "Join us to discuss the 2026 maintenance budget, upcoming security upgrades, and new pool rules....",
-    image: EVENT_IMAGE,
-    date: "Fri, Jan 10, 2026",
-    time: "7:30 PM - 9:00 PM",
-    location: "Main Conference Room, Building A",
-    attendeesCount: 85,
-    maxAttendees: 120,
-    price: 0,
-    isJoined: false,
-    isPast: false,
-  },
-];
-
-const PAST_EVENTS: Event[] = [
-  {
-    id: "4",
-    title: "Annual Charity 5K Run",
-    host: "Sakane Fitness Club",
-    description:
-      "A fantastic turnout! Thanks to everyone who participated. Together we ran for a cause and rais...",
-    image: EVENT_IMAGE,
-    date: "Sat, Nov 05, 2025",
-    time: "8:00 AM - 11:00 AM",
-    location: "Main Compound Track",
-    attendeesCount: 110,
-    maxAttendees: 110,
-    price: 0,
-    isJoined: true,
-    isPast: true,
-  },
-  {
-    id: "5",
-    title: "Sakane Winter Bazaar",
-    host: "Sakane Residents' Committee",
-    description:
-      "Our biggest market yet! Residents showcased amazing handmade crafts, baked goods, and art....",
-    image: EVENT_IMAGE,
-    date: "Fri, Dec 15, 2025",
-    time: "2:00 PM - 9:00 PM",
-    location: "Central Park Promenade",
-    attendeesCount: 200,
-    maxAttendees: 250,
-    price: 0,
-    isJoined: true,
-    isPast: true,
-  },
-];
-
 export default function EventsScreen() {
   const navigation = useNavigation<EventsScreenNavigationProp>();
-  const [activeTab, setActiveTab] = useState<EventTabType>("upcoming");
+  const userId = useAuthStore((state) => state.user?.id);
 
-  const currentEvents =
-    activeTab === "upcoming" ? UPCOMING_EVENTS : PAST_EVENTS;
+  const [activeTab, setActiveTab] = useState<EventTabType>("upcoming");
+  const [events, setEvents] = useState<Event[]>([]);
+  const [joinedIds, setJoinedIds] = useState<Record<string, boolean>>({});
+  const [joiningEventId, setJoiningEventId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [isCategoryFilterOpen, setIsCategoryFilterOpen] = useState(false);
+
+  const categoryOptions = useMemo(() => {
+    const unique = new Set<string>();
+    events.forEach((event) => {
+      const normalized = (event.category || "").trim();
+      if (normalized) {
+        unique.add(normalized);
+      }
+    });
+
+    return ["All", ...Array.from(unique).sort((a, b) => a.localeCompare(b))];
+  }, [events]);
+
+  const loadEvents = useCallback(
+    async (refresh = false) => {
+      if (refresh) {
+        setIsRefreshing(true);
+      } else {
+        setIsLoading(true);
+      }
+
+      try {
+        // Backend creates new events with PROPOSED status; include user's own items.
+        const data = await getEvents();
+        const mapped = data.map(mapEventDtoToUi);
+        const visibleEvents = mapped.filter((event) => {
+          const normalizedStatus = (event.status || "").toUpperCase();
+          if (
+            normalizedStatus === "APPROVED" ||
+            normalizedStatus === "COMPLETED"
+          ) {
+            return true;
+          }
+
+          return Boolean(userId) && event.organizerId === userId;
+        });
+
+        setEvents(visibleEvents);
+      } catch {
+        Alert.alert("Error", "Failed to load events.");
+      } finally {
+        setIsLoading(false);
+        setIsRefreshing(false);
+      }
+    },
+    [userId],
+  );
+
+  useEffect(() => {
+    void loadEvents();
+  }, [loadEvents]);
+
+  useFocusEffect(
+    useCallback(() => {
+      void loadEvents(true);
+    }, [loadEvents]),
+  );
+
+  const currentEvents = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+
+    const filteredByTab =
+      activeTab === "upcoming"
+        ? events.filter((event) => !event.isPast)
+        : events.filter((event) => event.isPast);
+
+    const filteredByCategory =
+      selectedCategory === "All"
+        ? filteredByTab
+        : filteredByTab.filter(
+            (event) =>
+              (event.category || "").toUpperCase() ===
+              selectedCategory.toUpperCase(),
+          );
+
+    const filtered =
+      query.length === 0
+        ? filteredByCategory
+        : filteredByCategory.filter((event) => {
+            const searchable = [
+              event.title,
+              event.description,
+              event.location,
+              event.hostName,
+              event.category || "",
+            ]
+              .join(" ")
+              .toLowerCase();
+
+            return searchable.includes(query);
+          });
+
+    return filtered.sort((a, b) => {
+      const first = new Date(a.startDate).getTime();
+      const second = new Date(b.startDate).getTime();
+
+      if (Number.isNaN(first) || Number.isNaN(second)) {
+        return 0;
+      }
+
+      return activeTab === "upcoming" ? first - second : second - first;
+    });
+  }, [activeTab, events, searchQuery, selectedCategory]);
 
   const handleEventPress = (id: string) => {
-    navigation.navigate("EventDetails", { eventId: id });
+    navigation.navigate("EventDetails", {
+      eventId: id,
+      isJoined: Boolean(joinedIds[id]),
+    });
+  };
+
+  const handleJoin = async (id: string) => {
+    if (joiningEventId) {
+      return;
+    }
+
+    const targetEvent = events.find((item) => item.id === id);
+    if (targetEvent && userId && targetEvent.organizerId === userId) {
+      Alert.alert("Not Allowed", "You cannot join an event you created.");
+      return;
+    }
+
+    setJoiningEventId(id);
+
+    try {
+      await registerForEvent(id, userId || undefined);
+      setJoinedIds((prev) => ({ ...prev, [id]: true }));
+      Alert.alert("Success", "You are registered for this event.");
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const message =
+          typeof error.response?.data === "object" &&
+          error.response?.data !== null &&
+          "message" in error.response.data &&
+          typeof error.response.data.message === "string"
+            ? error.response.data.message
+            : "";
+
+        if (message.toLowerCase().includes("already registered")) {
+          setJoinedIds((prev) => ({ ...prev, [id]: true }));
+          Alert.alert("Already Joined", "You are already registered.");
+          return;
+        }
+      }
+
+      Alert.alert("Error", "Failed to register for this event.");
+    } finally {
+      setJoiningEventId(null);
+    }
   };
 
   const handleGoBack = () => {
@@ -121,7 +199,7 @@ export default function EventsScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-[#F9FAFC]">
       {/* Header */}
       <View className="flex-row items-center justify-between px-4 py-3 bg-white">
         <TouchableOpacity
@@ -130,11 +208,44 @@ export default function EventsScreen() {
         >
           <Ionicons name="chevron-back" size={24} color="#000" />
         </TouchableOpacity>
-        <Text className="text-lg font-bold text-gray-900">
-          Community Events
-        </Text>
-        <TouchableOpacity className="w-10 h-10 items-center justify-center">
-          <Ionicons name="search" size={24} color="#000" />
+
+        {isSearchOpen ? (
+          <View className="flex-1 h-11 mx-2 px-3 bg-[#F8FAFC] border border-gray-200 rounded-xl flex-row items-center">
+            <Ionicons name="search" size={18} color="#9CA3AF" />
+            <TextInput
+              className="flex-1 ml-2 text-[14px] text-gray-900"
+              placeholder="Search events..."
+              placeholderTextColor="#9CA3AF"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              autoFocus
+            />
+            {searchQuery.trim().length > 0 ? (
+              <TouchableOpacity onPress={() => setSearchQuery("")}>
+                <Ionicons name="close-circle" size={18} color="#9CA3AF" />
+              </TouchableOpacity>
+            ) : null}
+          </View>
+        ) : (
+          <Text className="text-lg font-bold text-gray-900">
+            Community Events
+          </Text>
+        )}
+
+        <TouchableOpacity
+          className="w-10 h-10 items-center justify-center"
+          onPress={() => {
+            if (isSearchOpen) {
+              setSearchQuery("");
+            }
+            setIsSearchOpen((prev) => !prev);
+          }}
+        >
+          <Ionicons
+            name={isSearchOpen ? "close" : "search"}
+            size={22}
+            color="#000"
+          />
         </TouchableOpacity>
       </View>
 
@@ -174,29 +285,83 @@ export default function EventsScreen() {
       </View>
 
       {/* Explore Section */}
-      <View className="px-4 py-4 flex-row items-center justify-between bg-white">
-        <Text className="text-base font-bold text-gray-900">
-          Explore Events
-        </Text>
-        <TouchableOpacity className="flex-row items-center px-3 py-1.5 rounded-lg border border-gray-200">
-          <Ionicons name="funnel-outline" size={16} color="#6B7280" />
-          <Text className="text-sm font-medium text-gray-600 ml-1.5">
-            Filter
+      <View className="px-4 py-4 bg-white">
+        <View className="flex-row items-center justify-between">
+          <Text className="text-base font-bold text-gray-900">
+            Explore Events
           </Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setIsCategoryFilterOpen((prev) => !prev)}
+            className="flex-row items-center px-3 py-1.5 rounded-lg border border-gray-200"
+          >
+            <Ionicons name="funnel-outline" size={16} color="#6B7280" />
+            <Text className="text-sm font-medium text-gray-600 ml-1.5">
+              {selectedCategory === "All" ? "Category" : selectedCategory}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {isCategoryFilterOpen ? (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            className="mt-3"
+            contentContainerStyle={{ paddingRight: 4 }}
+          >
+            {categoryOptions.map((category) => {
+              const isSelected = selectedCategory === category;
+
+              return (
+                <TouchableOpacity
+                  key={category}
+                  onPress={() => setSelectedCategory(category)}
+                  className={`mr-2 px-3 py-2 rounded-full border ${
+                    isSelected
+                      ? "bg-[#E7F7F7] border-[#00A693]"
+                      : "bg-white border-gray-200"
+                  }`}
+                >
+                  <Text
+                    className={`text-xs ${
+                      isSelected
+                        ? "text-[#00A693] font-semibold"
+                        : "text-gray-600"
+                    }`}
+                  >
+                    {category}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        ) : null}
       </View>
 
       {/* Events List */}
       <ScrollView
-        className="flex-1 bg-white"
+        className="flex-1"
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={() => void loadEvents(true)}
+          />
+        }
         showsVerticalScrollIndicator={false}
       >
-        {currentEvents.length > 0 ? (
+        {isLoading ? (
+          <View className="px-4 py-12 items-center">
+            <Text className="text-gray-500">Loading events...</Text>
+          </View>
+        ) : currentEvents.length > 0 ? (
           currentEvents.map((event) => (
             <EventCard
               key={event.id}
               event={event}
+              isOwnEvent={Boolean(userId && event.organizerId === userId)}
+              isJoined={Boolean(joinedIds[event.id])}
+              isJoinLoading={joiningEventId === event.id}
               onPress={handleEventPress}
+              onJoin={handleJoin}
             />
           ))
         ) : (

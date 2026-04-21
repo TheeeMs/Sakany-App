@@ -19,3 +19,13 @@ export {
   resolveMaintenanceRequest,
   startMaintenanceRequest,
 } from "./maintenance";
+export {
+  approveEvent,
+  cancelEventRegistration,
+  createEvent,
+  getEventById,
+  getEvents,
+  registerForEvent,
+  rejectEvent,
+} from "./events";
+export type { EventDto, EventStatus, ProposeEventPayload } from "./events";

@@ -1,5 +1,9 @@
-import React from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  Alert,
+  Linking,
+  Share,
+  ActivityIndicator,
   View,
   Text,
   TouchableOpacity,
@@ -11,6 +15,14 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import type { RootStackParamList } from "../../navigation/AppNavigator";
+import {
+  cancelEventRegistration,
+  getEventById,
+  registerForEvent,
+} from "../../services/events";
+import { useAuthStore } from "../../store/authStore";
+import { eventDateTimeSummary, mapEventDtoToUi } from "./mappers";
+import type { Event } from "./types";
 
 type EventDetailsRouteProp = RouteProp<RootStackParamList, "EventDetails">;
 
@@ -19,31 +31,192 @@ const EVENT_IMAGE = require("../../../assets/build.png");
 export default function EventDetailsScreen() {
   const navigation = useNavigation();
   const route = useRoute<EventDetailsRouteProp>();
-  const { eventId } = route.params;
+  const userId = useAuthStore((state) => state.user?.id);
+  const { eventId, isJoined: initialIsJoined = false } = route.params;
+
+  const [event, setEvent] = useState<Event | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRegistered, setIsRegistered] = useState(initialIsJoined);
+
+  const loadEvent = useCallback(async () => {
+    setIsLoading(true);
+
+    try {
+      const data = await getEventById(eventId);
+      setEvent(mapEventDtoToUi(data));
+    } catch {
+      Alert.alert("Error", "Failed to load event details.");
+      navigation.goBack();
+    } finally {
+      setIsLoading(false);
+    }
+  }, [eventId, navigation]);
+
+  useEffect(() => {
+    void loadEvent();
+  }, [loadEvent]);
+
+  const registrationLabel = useMemo(() => {
+    if (!event || event.price <= 0) {
+      return "Free";
+    }
+
+    return `$${event.price}`;
+  }, [event]);
+
+  const isFull = useMemo(() => {
+    if (!event || typeof event.maxAttendees !== "number") {
+      return false;
+    }
+
+    return event.maxAttendees > 0 && event.attendeesCount >= event.maxAttendees;
+  }, [event]);
+
+  const organizerInitials = useMemo(() => {
+    if (!event?.hostName?.trim()) {
+      return "EV";
+    }
+
+    const parts = event.hostName.trim().split(/\s+/).filter(Boolean);
+    return (
+      parts
+        .slice(0, 2)
+        .map((part) => part[0]?.toUpperCase() || "")
+        .join("") || "EV"
+    );
+  }, [event]);
+
+  const isOwnEvent = useMemo(() => {
+    if (!event || !userId) {
+      return false;
+    }
+
+    return event.organizerId === userId;
+  }, [event, userId]);
 
   const handleGoBack = () => {
     navigation.goBack();
   };
 
-  const handleShare = () => {
-    console.log("Share event:", eventId);
+  const handleShare = async () => {
+    if (!event) {
+      return;
+    }
+
+    try {
+      await Share.share({
+        title: event.title,
+        message: `${event.title}\n${event.dateLabel} • ${event.timeLabel}\n${event.location}`,
+      });
+    } catch {
+      Alert.alert("Error", "Unable to share this event right now.");
+    }
   };
 
-  const handleCall = () => {
-    console.log("Call organizer");
+  const handleCall = async () => {
+    if (!event?.contactPhone) {
+      Alert.alert("Unavailable", "Contact phone is not available.");
+      return;
+    }
+
+    const url = `tel:${event.contactPhone}`;
+    const supported = await Linking.canOpenURL(url);
+
+    if (!supported) {
+      Alert.alert("Error", "Call action is not supported on this device.");
+      return;
+    }
+
+    await Linking.openURL(url);
   };
 
   const handleMessage = () => {
-    console.log("Message organizer");
+    if (!event?.contactPhone) {
+      Alert.alert("Unavailable", "Contact phone is not available.");
+      return;
+    }
+
+    Alert.alert("Organizer Contact", event.contactPhone);
   };
 
-  const handleViewLocation = () => {
-    console.log("View location");
+  const handleViewLocation = async () => {
+    if (!event?.location) {
+      Alert.alert("Unavailable", "Location details are not available.");
+      return;
+    }
+
+    const query = encodeURIComponent(event.location);
+    const url = `https://www.google.com/maps/search/?api=1&query=${query}`;
+    const supported = await Linking.canOpenURL(url);
+
+    if (!supported) {
+      Alert.alert("Error", "Unable to open maps.");
+      return;
+    }
+
+    await Linking.openURL(url);
   };
 
-  const handleJoinNow = () => {
-    console.log("Join event:", eventId);
+  const handleJoinNow = async () => {
+    if (isSubmitting) {
+      return;
+    }
+
+    if (isOwnEvent) {
+      Alert.alert("Not Allowed", "You cannot join an event you created.");
+      return;
+    }
+
+    if (event?.isPast) {
+      Alert.alert("Unavailable", "This event has already ended.");
+      return;
+    }
+
+    if (isFull) {
+      Alert.alert("Full", "This event reached maximum attendees.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      await registerForEvent(eventId, userId || undefined);
+      setIsRegistered(true);
+      Alert.alert("Success", "You are registered for this event.");
+    } catch {
+      Alert.alert("Error", "Failed to register for this event.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  const handleCancelRegistration = async () => {
+    if (isSubmitting) {
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      await cancelEventRegistration(eventId, userId || undefined);
+      setIsRegistered(false);
+      Alert.alert("Updated", "Your registration was cancelled.");
+    } catch {
+      Alert.alert("Error", "Failed to cancel registration.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (isLoading || !event) {
+    return (
+      <SafeAreaView className="flex-1 bg-white items-center justify-center">
+        <ActivityIndicator size="large" color="#00A693" />
+        <Text className="text-gray-500 mt-3">Loading event details...</Text>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <View className="flex-1 bg-white">
@@ -52,7 +225,7 @@ export default function EventDetailsScreen() {
       {/* Hero Image Section */}
       <View className="relative h-[340px] w-full">
         <Image
-          source={EVENT_IMAGE}
+          source={event.imageUrl ? { uri: event.imageUrl } : EVENT_IMAGE}
           className="w-full h-full"
           resizeMode="cover"
         />
@@ -102,14 +275,16 @@ export default function EventDetailsScreen() {
         {/* Event Header */}
         <View className="mb-6">
           <Text className="text-[#00a693] font-medium text-sm mb-2">
-            Community
+            {event.category || "Community"}
           </Text>
           <Text className="text-[28px] font-bold text-[#050B1B] leading-tight mb-2">
-            Summer Pool Party
+            {event.title}
           </Text>
           <View className="flex-row items-center">
             <Ionicons name="information-circle" size={16} color="#00a693" />
-            <Text className="text-gray-500 text-sm ml-2">Jul 15 - 4:00 PM</Text>
+            <Text className="text-gray-500 text-sm ml-2">
+              {eventDateTimeSummary(event)}
+            </Text>
           </View>
         </View>
 
@@ -119,9 +294,7 @@ export default function EventDetailsScreen() {
             About Event
           </Text>
           <Text className="text-gray-600 leading-relaxed text-[15px]">
-            Join us for an exciting summer pool party! Bring your family and
-            friends for an afternoon of fun, games, and refreshments. We'll have
-            music, water activities, and BBQ food available.
+            {event.description}
           </Text>
         </View>
 
@@ -136,13 +309,17 @@ export default function EventDetailsScreen() {
             <View className="flex-row items-center justify-between">
               <View className="flex-row items-center flex-1">
                 <View className="w-12 h-12 rounded-full bg-[#00a693] items-center justify-center">
-                  <Text className="text-white font-semibold text-lg">SC</Text>
+                  <Text className="text-white font-semibold text-lg">
+                    {organizerInitials}
+                  </Text>
                 </View>
                 <View className="ml-3 flex-1">
                   <Text className="font-semibold text-[#111827] text-base">
-                    Social Committee
+                    {event.hostName}
                   </Text>
-                  <Text className="text-gray-500 text-sm">Events Team</Text>
+                  <Text className="text-gray-500 text-sm">
+                    {event.hostRole || "Events Team"}
+                  </Text>
                 </View>
               </View>
 
@@ -180,7 +357,7 @@ export default function EventDetailsScreen() {
                 </View>
                 <View className="ml-3 flex-1">
                   <Text className="font-semibold text-[#111827] text-base">
-                    Main Compound Track
+                    {event.location}
                   </Text>
                   <Text className="text-gray-400 text-sm">
                     Tap to view location
@@ -209,15 +386,53 @@ export default function EventDetailsScreen() {
       >
         <View>
           <Text className="text-gray-400 text-sm">Registration</Text>
-          <Text className="text-[#00a693] text-xl font-bold">Free</Text>
+          <Text className="text-[#00a693] text-xl font-bold">
+            {registrationLabel}
+          </Text>
         </View>
-        <TouchableOpacity
-          onPress={handleJoinNow}
-          activeOpacity={0.9}
-          className="bg-[#00a693] px-12 py-4 rounded-3xl"
-        >
-          <Text className="text-white font-bold text-lg">Join Now</Text>
-        </TouchableOpacity>
+        {isOwnEvent ? (
+          <TouchableOpacity
+            disabled
+            activeOpacity={1}
+            className="bg-gray-400 px-8 py-4 rounded-3xl"
+          >
+            <Text className="text-white font-bold text-lg">Your Event</Text>
+          </TouchableOpacity>
+        ) : isRegistered ? (
+          <TouchableOpacity
+            onPress={handleCancelRegistration}
+            disabled={isSubmitting}
+            activeOpacity={0.9}
+            className="bg-gray-200 px-8 py-4 rounded-3xl"
+          >
+            <Text className="text-gray-800 font-bold text-lg">
+              {isSubmitting ? "Please wait..." : "Cancel"}
+            </Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            onPress={handleJoinNow}
+            disabled={isSubmitting || isOwnEvent || event.isPast || isFull}
+            activeOpacity={0.9}
+            className={`px-12 py-4 rounded-3xl ${
+              isOwnEvent || event.isPast || isFull
+                ? "bg-gray-400"
+                : "bg-[#00a693]"
+            }`}
+          >
+            <Text className="text-white font-bold text-lg">
+              {isOwnEvent
+                ? "Your Event"
+                : event.isPast
+                  ? "Event Ended"
+                  : isFull
+                    ? "Full"
+                    : isSubmitting
+                      ? "Please wait..."
+                      : "Join Now"}
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
