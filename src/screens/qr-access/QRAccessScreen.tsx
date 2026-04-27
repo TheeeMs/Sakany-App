@@ -6,7 +6,6 @@ import {
   TextInput,
   ScrollView,
   StatusBar,
-  Alert,
   Share,
   ActivityIndicator,
   RefreshControl,
@@ -15,6 +14,7 @@ import { useNavigation } from "@react-navigation/native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppBottomNav } from "../../components/navigation";
+import { useCustomAlert } from "../../components/CustomAlert";
 
 // Types
 import type { VisitorType, PassType, ActivePass } from "./types";
@@ -68,6 +68,7 @@ function mapAccessCodeToPass(ac: AccessCode): ActivePass {
 export default function QRAccessScreen() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
+  const alert = useCustomAlert();
 
   // Form state
   const [selectedVisitorType, setSelectedVisitorType] = useState<VisitorType>("guest");
@@ -127,15 +128,15 @@ export default function QRAccessScreen() {
 
   const handleGenerateQR = async () => {
     if (!visitorName.trim()) {
-      Alert.alert("Missing Information", "Please enter the visitor name.");
+      alert.show("Missing Information", "Please enter the visitor name.", [{ text: "OK" }], "warning");
       return;
     }
     if (!date) {
-      Alert.alert("Missing Information", "Please select a date.");
+      alert.show("Missing Information", "Please select a date.", [{ text: "OK" }], "warning");
       return;
     }
     if (!time) {
-      Alert.alert("Missing Information", "Please select a time.");
+      alert.show("Missing Information", "Please select a time.", [{ text: "OK" }], "warning");
       return;
     }
 
@@ -167,7 +168,7 @@ export default function QRAccessScreen() {
       setShowQRModal(true);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to generate QR code";
-      Alert.alert("Error", msg);
+      alert.show("Error", msg, [{ text: "OK" }], "warning");
     } finally {
       setIsGenerating(false);
     }
@@ -264,7 +265,7 @@ Share this code with your visitor for access.
   };
 
   const handleDeletePass = (pass: ActivePass) => {
-    Alert.alert(
+    alert.show(
       "Delete Pass",
       `Are you sure you want to delete the pass for ${pass.name}?`,
       [
@@ -277,11 +278,12 @@ Share this code with your visitor for access.
               await revokeAccessCode(pass.id);
               setActivePasses((prev) => prev.filter((p) => p.id !== pass.id));
             } catch {
-              Alert.alert("Error", "Failed to delete pass. Please try again.");
+              alert.show("Error", "Failed to delete pass. Please try again.", [{ text: "OK" }], "danger");
             }
           },
         },
-      ]
+      ],
+      "danger"
     );
   };
 
@@ -479,6 +481,9 @@ Share this code with your visitor for access.
       />
 
       <AppBottomNav />
+
+      {/* Custom Alert — must be last */}
+      <alert.Component />
     </View>
   );
 }
