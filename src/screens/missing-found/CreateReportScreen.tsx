@@ -8,6 +8,7 @@ import {
   StatusBar,
   Alert,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import {
@@ -19,6 +20,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // Types
 import type { TabType, CategoryType } from "./types";
+
+// API
+import { createAlert, type AlertType, type AlertCategory } from "../../services/missingFound";
+
+
 
 type ReportType = "missing" | "found";
 
@@ -72,9 +78,10 @@ export default function CreateReportScreen() {
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Handle submit
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!category) {
       Alert.alert("Error", "Please select a category");
       return;
@@ -91,10 +98,41 @@ export default function CreateReportScreen() {
       Alert.alert("Error", "Please enter the last seen location");
       return;
     }
+    if (!phoneNumber.trim()) {
+      Alert.alert("Error", "Please enter a contact number");
+      return;
+    }
 
-    Alert.alert("Success", "Report submitted successfully!", [
-      { text: "OK", onPress: () => navigation.goBack() },
-    ]);
+    const categoryMap: Record<CategoryType, AlertCategory> = {
+      pet: "PET",
+      item: "ITEM",
+      person: "PERSON",
+      vehicle: "VEHICLE",
+      other: "OTHER",
+    };
+
+    setIsSubmitting(true);
+    try {
+      await createAlert({
+        type: reportType.toUpperCase() as AlertType,
+        category: categoryMap[category],
+        title: title.trim(),
+        description: description.trim(),
+        location: location.trim(),
+        contactNumber: `+20${phoneNumber.trim()}`,
+        eventTime: new Date().toISOString(),
+        photoUrls: [],
+      });
+
+      Alert.alert("Success", "Report submitted successfully!", [
+        { text: "OK", onPress: () => navigation.goBack() },
+      ]);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to submit report";
+      Alert.alert("Error", msg);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Handle photo upload
@@ -651,27 +689,40 @@ export default function CreateReportScreen() {
         {/* Submit Button */}
         <TouchableOpacity
           onPress={handleSubmit}
+          disabled={isSubmitting}
           style={{
-            backgroundColor: "#00A996",
+            backgroundColor: isSubmitting ? "#80D4CB" : "#00A996",
             height: 53,
             borderRadius: 16,
             alignItems: "center",
             justifyContent: "center",
+            flexDirection: "row",
+            gap: 8,
           }}
           activeOpacity={0.8}
         >
-          <Text
-            style={{
-              fontSize: 16,
-              fontWeight: "500",
-              color: "#FFFFFF",
-              textAlign: "center",
-              lineHeight: 21,
-            }}
-          >
-            Submit Report
-          </Text>
+          {isSubmitting ? (
+            <>
+              <ActivityIndicator size="small" color="#FFFFFF" />
+              <Text style={{ fontSize: 16, fontWeight: "500", color: "#FFFFFF" }}>
+                Submitting...
+              </Text>
+            </>
+          ) : (
+            <Text
+              style={{
+                fontSize: 16,
+                fontWeight: "500",
+                color: "#FFFFFF",
+                textAlign: "center",
+                lineHeight: 21,
+              }}
+            >
+              Submit Report
+            </Text>
+          )}
         </TouchableOpacity>
+
       </ScrollView>
     </View>
   );
