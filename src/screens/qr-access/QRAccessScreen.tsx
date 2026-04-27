@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -8,6 +8,8 @@ import {
   StatusBar,
   Alert,
   Share,
+  ActivityIndicator,
+  RefreshControl,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
@@ -28,36 +30,58 @@ import {
   QRViewModal,
 } from "./components";
 
-// Generate unique access code
-const generateAccessCode = (visitorType: VisitorType): string => {
-  const prefix =
-    visitorType === "guest"
-      ? "VIS"
-      : visitorType === "delivery"
-        ? "DEL"
-        : visitorType === "service"
-          ? "SRV"
-          : "FAM";
-  const year = new Date().getFullYear();
-  const random = Math.floor(Math.random() * 1000)
-    .toString()
-    .padStart(3, "0");
-  return `${prefix}-${year}-${random}`;
-};
+// API
+import {
+  createAccessCode,
+  getMyAccessCodes,
+  revokeAccessCode,
+  mapVisitorTypeToPurpose,
+  mapPurposeToType,
+  mapStatusToDisplay,
+  type AccessCode,
+} from "../../services/qrAccess";
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function mapAccessCodeToPass(ac: AccessCode): ActivePass {
+  const validUntilDate = new Date(ac.validUntil);
+  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  let hours = validUntilDate.getHours();
+  const minutes = String(validUntilDate.getMinutes()).padStart(2, "0");
+  const ampm = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12 || 12;
+  const validUntilStr = `${months[validUntilDate.getMonth()]} ${validUntilDate.getDate()}, ${validUntilDate.getFullYear()} ${hours}:${minutes} ${ampm}`;
+
+  return {
+    id: ac.id,
+    name: ac.visitorName,
+    type: mapPurposeToType(ac.purpose) as ActivePass["type"],
+    usage: ac.isSingleUse ? "Single use" : "Multiple use",
+    usageCount: ac.isSingleUse ? 1 : 2,
+    accessCode: ac.code,
+    validUntil: validUntilStr,
+    validDate: new Date(ac.validUntil),
+    validTime: new Date(ac.validUntil),
+  };
+}
 
 export default function QRAccessScreen() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
 
-  // State
-  const [selectedVisitorType, setSelectedVisitorType] =
-    useState<VisitorType>("guest");
-  const [selectedPassType, setSelectedPassType] =
-    useState<PassType>("one-time");
+  // Form state
+  const [selectedVisitorType, setSelectedVisitorType] = useState<VisitorType>("guest");
+  const [selectedPassType, setSelectedPassType] = useState<PassType>("one-time");
   const [visitorName, setVisitorName] = useState("");
   const [date, setDate] = useState<Date | null>(null);
   const [time, setTime] = useState<Date | null>(null);
   const [usageCount, setUsageCount] = useState(2);
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  // Active passes state
+  const [activePasses, setActivePasses] = useState<ActivePass[]>([]);
+  const [isLoadingPasses, setIsLoadingPasses] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // QR Modal State
   const [showQRModal, setShowQRModal] = useState(false);
@@ -74,103 +98,97 @@ export default function QRAccessScreen() {
   const [showViewQRModal, setShowViewQRModal] = useState(false);
   const [selectedPass, setSelectedPass] = useState<ActivePass | null>(null);
 
-  // Sample Active Passes Data
-  const [activePasses, setActivePasses] = useState<ActivePass[]>([
-    {
-      id: "1",
-      name: "Sarah Johnson",
-      type: "Visitor",
-      usage: "Single use",
-      usageCount: 1,
-      accessCode: "VIS-2026-101",
-      validUntil: "Dec 15, 2026 6:00 PM",
-    },
-    {
-      id: "2",
-      name: "Ahmed Hassan",
-      type: "Delivery",
-      usage: "Multiple use",
-      usageCount: 3,
-      accessCode: "DEL-2026-205",
-      validUntil: "Dec 20, 2026 2:00 PM",
-    },
-    {
-      id: "3",
-      name: "Mohamed Saeed",
-      type: "Service",
-      usage: "Single use",
-      usageCount: 1,
-      accessCode: "SRV-2026-089",
-      validUntil: "Dec 18, 2026 10:00 AM",
-    },
-  ]);
+  // ─── Fetch active passes ───────────────────────────────────────────────────
 
-  // Generate QR Code Handler
-  const handleGenerateQR = () => {
-    // Validation
+  const fetchPasses = useCallback(async (isRefresh = false) => {
+    if (isRefresh) setIsRefreshing(true);
+    else setIsLoadingPasses(true);
+
+    try {
+      const codes = await getMyAccessCodes();
+      // Show only ACTIVE passes on the main screen
+      const active = codes
+        .filter((c) => c.status === "ACTIVE")
+        .map(mapAccessCodeToPass);
+      setActivePasses(active);
+    } catch {
+      // silently fail – passes section will just be empty
+    } finally {
+      setIsLoadingPasses(false);
+      setIsRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchPasses();
+  }, [fetchPasses]);
+
+  // ─── Generate QR ──────────────────────────────────────────────────────────
+
+  const handleGenerateQR = async () => {
     if (!visitorName.trim()) {
       Alert.alert("Missing Information", "Please enter the visitor name.");
       return;
     }
-
     if (!date) {
       Alert.alert("Missing Information", "Please select a date.");
       return;
     }
-
     if (!time) {
       Alert.alert("Missing Information", "Please select a time.");
       return;
     }
 
-    // Generate access code
-    const accessCode = generateAccessCode(selectedVisitorType);
+    // Build validFrom = now, validUntil = selected date+time
+    const validFrom = new Date().toISOString();
+    const combined = new Date(date);
+    combined.setHours(time.getHours(), time.getMinutes(), 0, 0);
+    const validUntil = combined.toISOString();
 
-    // Set QR data
-    setGeneratedQRData({
-      visitorType: selectedVisitorType,
-      visitorName: visitorName.trim(),
-      usageCount: selectedPassType === "one-time" ? 1 : usageCount,
-      date,
-      time,
-      accessCode,
-    });
+    setIsGenerating(true);
+    try {
+      const ac = await createAccessCode({
+        visitorName: visitorName.trim(),
+        purpose: mapVisitorTypeToPurpose(selectedVisitorType),
+        isSingleUse: selectedPassType === "one-time",
+        validFrom,
+        validUntil,
+      });
 
-    // Show modal
-    setShowQRModal(true);
+      setGeneratedQRData({
+        visitorType: selectedVisitorType,
+        visitorName: visitorName.trim(),
+        usageCount: selectedPassType === "one-time" ? 1 : usageCount,
+        date,
+        time,
+        accessCode: ac.code,
+      });
+
+      setShowQRModal(true);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to generate QR code";
+      Alert.alert("Error", msg);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
-  // Handle modal close and add to active passes
+  // ─── Modal close → add to list & reset form ───────────────────────────────
+
   const handleQRModalClose = () => {
     if (generatedQRData) {
-      // Format the valid until date
       const formatValidUntil = () => {
         if (!generatedQRData.date || !generatedQRData.time) return "";
-        const months = [
-          "Jan",
-          "Feb",
-          "Mar",
-          "Apr",
-          "May",
-          "Jun",
-          "Jul",
-          "Aug",
-          "Sep",
-          "Oct",
-          "Nov",
-          "Dec",
-        ];
+        const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
         const d = generatedQRData.date;
         const t = generatedQRData.time;
         let hours = t.getHours();
         const minutes = String(t.getMinutes()).padStart(2, "0");
         const ampm = hours >= 12 ? "PM" : "AM";
-        hours = hours % 12;
-        hours = hours ? hours : 12;
+        hours = hours % 12 || 12;
         return `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()} ${hours}:${minutes} ${ampm}`;
       };
 
-      // Map visitor type to display type
       const typeMap: Record<VisitorType, ActivePass["type"]> = {
         guest: "Visitor",
         delivery: "Delivery",
@@ -178,7 +196,6 @@ export default function QRAccessScreen() {
         family: "Family",
       };
 
-      // Add new pass to active passes
       const newPass: ActivePass = {
         id: Date.now().toString(),
         name: generatedQRData.visitorName,
@@ -192,8 +209,6 @@ export default function QRAccessScreen() {
       };
 
       setActivePasses((prev) => [newPass, ...prev]);
-
-      // Reset form
       setVisitorName("");
       setDate(null);
       setTime(null);
@@ -205,20 +220,15 @@ export default function QRAccessScreen() {
     setGeneratedQRData(null);
   };
 
-  // Visitor Type Icons
+  // ─── Visitor Type Icons ───────────────────────────────────────────────────
+
   const getVisitorIcon = (type: VisitorType, isSelected: boolean) => {
     const color = isSelected ? "#FFFFFF" : "#6B7280";
     switch (type) {
       case "guest":
         return <Ionicons name="person-outline" size={24} color={color} />;
       case "delivery":
-        return (
-          <MaterialCommunityIcons
-            name="truck-delivery-outline"
-            size={24}
-            color={color}
-          />
-        );
+        return <MaterialCommunityIcons name="truck-delivery-outline" size={24} color={color} />;
       case "service":
         return <MaterialCommunityIcons name="tools" size={24} color={color} />;
       case "family":
@@ -226,13 +236,13 @@ export default function QRAccessScreen() {
     }
   };
 
-  // Handle View QR for existing pass
+  // ─── Pass actions ─────────────────────────────────────────────────────────
+
   const handleViewQR = (pass: ActivePass) => {
     setSelectedPass(pass);
     setShowViewQRModal(true);
   };
 
-  // Handle Share for existing pass
   const handleSharePass = async (pass: ActivePass) => {
     try {
       const message = `
@@ -247,16 +257,12 @@ export default function QRAccessScreen() {
 Share this code with your visitor for access.
       `.trim();
 
-      await Share.share({
-        message,
-        title: "Access Pass",
-      });
+      await Share.share({ message, title: "Access Pass" });
     } catch (error) {
       console.error("Error sharing:", error);
     }
   };
 
-  // Handle Delete pass
   const handleDeletePass = (pass: ActivePass) => {
     Alert.alert(
       "Delete Pass",
@@ -266,15 +272,19 @@ Share this code with your visitor for access.
         {
           text: "Delete",
           style: "destructive",
-          onPress: () => {
-            setActivePasses((prev) => prev.filter((p) => p.id !== pass.id));
+          onPress: async () => {
+            try {
+              await revokeAccessCode(pass.id);
+              setActivePasses((prev) => prev.filter((p) => p.id !== pass.id));
+            } catch {
+              Alert.alert("Error", "Failed to delete pass. Please try again.");
+            }
           },
         },
-      ],
+      ]
     );
   };
 
-  // Visitor Types Data
   const visitorTypes: { type: VisitorType; label: string }[] = [
     { type: "guest", label: "Guest" },
     { type: "delivery", label: "Delivery" },
@@ -312,34 +322,33 @@ Share this code with your visitor for access.
         className="flex-1 px-4"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 20 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={() => fetchPasses(true)}
+            tintColor="#0D9488"
+          />
+        }
       >
         {/* Create New QR Section */}
         <View className="mb-6">
-          <Text className="text-lg font-bold text-gray-900 mb-4">
-            Create New QR
-          </Text>
+          <Text className="text-lg font-bold text-gray-900 mb-4">Create New QR</Text>
 
-          {/* Visitor Type Label */}
           <Text className="text-sm text-gray-500 mb-3">Visitor Type</Text>
 
-          {/* Visitor Type Buttons */}
           <View className="flex-row justify-around mb-5">
             {visitorTypes.map((item) => (
               <VisitorTypeButton
                 key={item.type}
                 type={item.type}
                 label={item.label}
-                icon={getVisitorIcon(
-                  item.type,
-                  selectedVisitorType === item.type,
-                )}
+                icon={getVisitorIcon(item.type, selectedVisitorType === item.type)}
                 isSelected={selectedVisitorType === item.type}
                 onPress={() => setSelectedVisitorType(item.type)}
               />
             ))}
           </View>
 
-          {/* Pass Type Buttons */}
           <View className="flex-row mb-5">
             <PassTypeTab
               label="One-time"
@@ -353,7 +362,6 @@ Share this code with your visitor for access.
             />
           </View>
 
-          {/* Input Fields */}
           <View
             className="bg-white rounded-2xl p-4 mb-4"
             style={{
@@ -364,7 +372,6 @@ Share this code with your visitor for access.
               elevation: 2,
             }}
           >
-            {/* Visitor Name Input */}
             <View className="flex-row items-center border border-gray-200 rounded-xl px-4 py-3 mb-3">
               <Ionicons name="person-outline" size={20} color="#9CA3AF" />
               <TextInput
@@ -376,7 +383,6 @@ Share this code with your visitor for access.
               />
             </View>
 
-            {/* Usage Count Input - Only show for Multiple pass type */}
             {selectedPassType === "multiple" && (
               <View className="mb-3">
                 <UsageCountInput
@@ -388,7 +394,6 @@ Share this code with your visitor for access.
               </View>
             )}
 
-            {/* Date and Time Inputs */}
             <DateTimeInput
               date={date}
               time={time}
@@ -400,8 +405,10 @@ Share this code with your visitor for access.
           {/* Generate QR Button */}
           <TouchableOpacity
             onPress={handleGenerateQR}
-            className="bg-[#0D9488] flex-row items-center justify-center py-4 rounded-xl"
+            disabled={isGenerating}
+            className="flex-row items-center justify-center py-4 rounded-xl"
             style={{
+              backgroundColor: isGenerating ? "#5EC5BD" : "#0D9488",
               shadowColor: "#0D9488",
               shadowOffset: { width: 0, height: 4 },
               shadowOpacity: 0.3,
@@ -409,27 +416,46 @@ Share this code with your visitor for access.
               elevation: 5,
             }}
           >
-            <MaterialCommunityIcons name="qrcode" size={22} color="white" />
-            <Text className="text-white text-base font-semibold ml-2">
-              Generate QR Code
-            </Text>
+            {isGenerating ? (
+              <>
+                <ActivityIndicator size="small" color="white" />
+                <Text className="text-white text-base font-semibold ml-2">Generating...</Text>
+              </>
+            ) : (
+              <>
+                <MaterialCommunityIcons name="qrcode" size={22} color="white" />
+                <Text className="text-white text-base font-semibold ml-2">Generate QR Code</Text>
+              </>
+            )}
           </TouchableOpacity>
         </View>
 
         {/* Active Passes Section */}
         <View>
-          <Text className="text-lg font-bold text-gray-900 mb-4">
-            Active Passes
-          </Text>
-          {activePasses.map((pass) => (
-            <ActivePassCard
-              key={pass.id}
-              pass={pass}
-              onViewQR={handleViewQR}
-              onShare={handleSharePass}
-              onDelete={handleDeletePass}
-            />
-          ))}
+          <Text className="text-lg font-bold text-gray-900 mb-4">Active Passes</Text>
+
+          {isLoadingPasses ? (
+            <View style={{ paddingVertical: 32, alignItems: "center" }}>
+              <ActivityIndicator size="small" color="#0D9488" />
+            </View>
+          ) : activePasses.length === 0 ? (
+            <View style={{ paddingVertical: 32, alignItems: "center" }}>
+              <MaterialCommunityIcons name="qrcode-remove" size={48} color="#D1D5DB" />
+              <Text style={{ color: "#9CA3AF", marginTop: 12, fontSize: 14 }}>
+                No active passes yet
+              </Text>
+            </View>
+          ) : (
+            activePasses.map((pass) => (
+              <ActivePassCard
+                key={pass.id}
+                pass={pass}
+                onViewQR={handleViewQR}
+                onShare={handleSharePass}
+                onDelete={handleDeletePass}
+              />
+            ))
+          )}
         </View>
       </ScrollView>
 
@@ -442,7 +468,7 @@ Share this code with your visitor for access.
         />
       )}
 
-      {/* View QR Modal for Existing Passes */}
+      {/* View QR Modal */}
       <QRViewModal
         visible={showViewQRModal}
         onClose={() => {
@@ -452,7 +478,6 @@ Share this code with your visitor for access.
         pass={selectedPass}
       />
 
-      {/* Bottom Navigation */}
       <AppBottomNav />
     </View>
   );
