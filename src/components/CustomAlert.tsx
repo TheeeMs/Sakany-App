@@ -57,10 +57,8 @@ export function CustomAlert({
 
   useEffect(() => {
     if (visible) {
-      // Reset instantly, then animate in
       translateY.setValue(40);
       opacity.setValue(0);
-
       Animated.parallel([
         Animated.timing(translateY, {
           toValue: 0,
@@ -91,12 +89,8 @@ export function CustomAlert({
 
       {/* Card */}
       <View style={styles.wrapper} pointerEvents="box-none">
-        <Animated.View
-          style={[
-            styles.card,
-            { opacity, transform: [{ translateY }] },
-          ]}
-        >
+        <Animated.View style={[styles.card, { opacity, transform: [{ translateY }] }]}>
+
           {/* Icon Badge */}
           <View style={[styles.iconWrap, { backgroundColor: cfg.bg }]}>
             <Ionicons name={cfg.icon} size={32} color={cfg.color} />
@@ -106,37 +100,27 @@ export function CustomAlert({
           <Text style={styles.title}>{title}</Text>
 
           {/* Message */}
-          {message ? (
-            <Text style={styles.message}>{message}</Text>
-          ) : null}
+          {message ? <Text style={styles.message}>{message}</Text> : null}
 
           {/* Divider */}
           <View style={styles.divider} />
 
           {/* Buttons */}
-          <View style={[styles.buttonsRow, buttons.length === 1 && styles.buttonsCenter]}>
+          <View style={styles.buttonsRow}>
             {buttons.map((btn, i) => {
               const isDestructive = btn.style === "destructive";
               const isCancel      = btn.style === "cancel";
               const textColor     = isDestructive ? "#EF4444" : isCancel ? "#6B7280" : cfg.color;
-              const bgColor       = isDestructive
-                ? "#FEF2F2"
-                : isCancel
-                ? "#F3F4F6"
-                : cfg.bg;
+              const bgColor       = isDestructive ? "#FEF2F2" : isCancel ? "#F3F4F6" : cfg.bg;
 
               return (
                 <TouchableOpacity
                   key={i}
-                  onPress={() => {
-                    btn.onPress?.();
-                    onDismiss?.();
-                  }}
+                  onPress={() => { btn.onPress?.(); onDismiss?.(); }}
                   style={[
                     styles.btn,
-                    { backgroundColor: bgColor },
-                    i > 0 && { marginLeft: 8 },
-                    buttons.length === 1 && styles.btnFull,
+                    { flex: 1, backgroundColor: bgColor },
+                    i > 0 ? styles.btnWithMargin : undefined,
                   ]}
                   activeOpacity={0.7}
                 >
@@ -147,6 +131,7 @@ export function CustomAlert({
               );
             })}
           </View>
+
         </Animated.View>
       </View>
     </Modal>
@@ -164,35 +149,29 @@ export function useCustomAlert() {
     buttons?: CustomAlertButton[];
   }>({ visible: false, title: "" });
 
-  const show = useCallback(
-    (
-      title: string,
-      message?: string,
-      buttons?: CustomAlertButton[],
-      variant?: AlertVariant
-    ) => {
-      setState({ visible: true, title, message, buttons, variant });
-    },
-    []
-  );
+  const show = useCallback((
+    title: string,
+    message?: string,
+    buttons?: CustomAlertButton[],
+    variant?: AlertVariant
+  ) => {
+    setState({ visible: true, title, message, buttons, variant });
+  }, []);
 
   const dismiss = useCallback(() => {
     setState((prev) => ({ ...prev, visible: false }));
   }, []);
 
-  const Component = useCallback(
-    () => (
-      <CustomAlert
-        visible={state.visible}
-        title={state.title}
-        message={state.message}
-        variant={state.variant}
-        buttons={state.buttons}
-        onDismiss={dismiss}
-      />
-    ),
-    [state, dismiss]
-  );
+  const Component = useCallback(() => (
+    <CustomAlert
+      visible={state.visible}
+      title={state.title}
+      message={state.message}
+      variant={state.variant}
+      buttons={state.buttons}
+      onDismiss={dismiss}
+    />
+  ), [state, dismiss]);
 
   return { show, dismiss, Component };
 }
@@ -257,20 +236,18 @@ const styles = StyleSheet.create({
   buttonsRow: {
     flexDirection: "row",
     width: "100%",
-    justifyContent: "flex-end",
-    alignItems: "center",
-  },
-  buttonsCenter: {
-    justifyContent: "center",
   },
   btn: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingVertical: 12,
     borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  btnWithMargin: {
+    marginLeft: 10,
   },
   btnFull: {
     flex: 1,
-    alignItems: "center",
   },
   btnText: {
     fontSize: 13,
