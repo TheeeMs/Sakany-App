@@ -3,7 +3,7 @@ import { api } from "./api";
 // ─── Types matching backend ─────────────────────────────────────────────────
 
 export type FeedbackType   = "SUGGESTION" | "COMPLAINT" | "COMPLIMENT";
-export type FeedbackStatus = "PENDING" | "UNDER_REVIEW" | "APPROVED" | "REJECTED";
+export type FeedbackStatus = "OPEN" | "UNDER_REVIEW" | "ADDRESSED" | "APPROVED" | "CLOSED";
 export type VoteType       = "UPVOTE" | "DOWNVOTE";
 
 export interface FeedbackItem {
@@ -96,9 +96,9 @@ export function mapCategoryToLabel(cat: string): string {
 
 /** Map backend status → frontend PostStatus */
 export function mapStatus(status: FeedbackStatus): "approved" | "under_review" | "not_approved" {
-  if (status === "APPROVED")    return "approved";
-  if (status === "UNDER_REVIEW" || status === "PENDING") return "under_review";
-  return "not_approved";
+  if (status === "APPROVED" || status === "OPEN" || status === "ADDRESSED") return "approved";
+  if (status === "UNDER_REVIEW") return "under_review";
+  return "not_approved"; // CLOSED
 }
 
 /** Format ISO date → "Dec 10, 2024" */
