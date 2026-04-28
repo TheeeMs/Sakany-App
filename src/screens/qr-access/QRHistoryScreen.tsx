@@ -1,23 +1,34 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   ScrollView,
   StatusBar,
-  Alert,
-  Animated,
+  ActivityIndicator,
+  RefreshControl,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons, MaterialCommunityIcons, Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppBottomNav } from "../../components/navigation";
+import { useCustomAlert } from "../../components/CustomAlert";
 
-// Status Types
+// API
+import {
+  getMyAccessCodes,
+  revokeAccessCode,
+  reactivateAccessCode,
+  mapPurposeToType,
+  mapStatusToDisplay,
+  type AccessCode,
+} from "../../services/qrAccess";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
 type StatusType = "all" | "Active" | "Used" | "Expired";
 
-// History Item Type
 interface HistoryItemData {
   id: string;
   name: string;
@@ -26,120 +37,65 @@ interface HistoryItemData {
   status: "Active" | "Used" | "Expired";
   accessCode: string;
   usageCount?: number;
+  _raw: AccessCode;
 }
 
-// Helper for status colors and icons
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function mapAccessCodeToHistory(ac: AccessCode): HistoryItemData {
+  const date = new Date(ac.validUntil);
+  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  let hours = date.getHours();
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  const ampm = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12 || 12;
+  const dateStr = `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()} ${hours}:${minutes} ${ampm}`;
+  return {
+    id: ac.id,
+    name: ac.visitorName,
+    type: mapPurposeToType(ac.purpose),
+    date: dateStr,
+    status: mapStatusToDisplay(ac.status),
+    accessCode: ac.code,
+    usageCount: ac.isSingleUse ? 1 : 2,
+    _raw: ac,
+  };
+}
+
 const getStatusConfig = (status: string) => {
   switch (status) {
-    case "Expired":
-      return {
-        bg: "bg-red-50",
-        text: "text-red-500",
-        icon: "close-circle" as const,
-        iconColor: "#EF4444",
-        gradient: ["#FEE2E2", "#FECACA"] as const,
-      };
-    case "Used":
-      return {
-        bg: "bg-gray-100",
-        text: "text-gray-500",
-        icon: "checkmark-circle" as const,
-        iconColor: "#6B7280",
-        gradient: ["#F3F4F6", "#E5E7EB"] as const,
-      };
-    case "Active":
-      return {
-        bg: "bg-green-50",
-        text: "text-green-500",
-        icon: "checkmark-circle" as const,
-        iconColor: "#10B981",
-        gradient: ["#D1FAE5", "#A7F3D0"] as const,
-      };
-    default:
-      return {
-        bg: "bg-gray-100",
-        text: "text-gray-500",
-        icon: "ellipse" as const,
-        iconColor: "#6B7280",
-        gradient: ["#F3F4F6", "#E5E7EB"] as const,
-      };
+    case "Expired": return { bg: "bg-red-50", text: "text-red-500", icon: "close-circle" as const, iconColor: "#EF4444" };
+    case "Used":    return { bg: "bg-gray-100", text: "text-gray-500", icon: "checkmark-circle" as const, iconColor: "#6B7280" };
+    case "Active":  return { bg: "bg-green-50", text: "text-green-500", icon: "checkmark-circle" as const, iconColor: "#10B981" };
+    default:        return { bg: "bg-gray-100", text: "text-gray-500", icon: "ellipse" as const, iconColor: "#6B7280" };
   }
 };
 
 const getTypeConfig = (type: string) => {
   switch (type) {
-    case "Visitor":
-      return {
-        bg: "#E6F7F6",
-        text: "#0D9488",
-        icon: "person-outline" as const,
-      };
-    case "Delivery":
-      return { bg: "#FFF7ED", text: "#EA580C", icon: "cube-outline" as const };
-    case "Service":
-      return {
-        bg: "#EFF6FF",
-        text: "#2563EB",
-        icon: "construct-outline" as const,
-      };
-    case "Family":
-      return {
-        bg: "#F3E8FF",
-        text: "#9333EA",
-        icon: "people-outline" as const,
-      };
-    default:
-      return {
-        bg: "#F3F4F6",
-        text: "#6B7280",
-        icon: "person-outline" as const,
-      };
+    case "Visitor":  return { bg: "#E6F7F6", text: "#0D9488", icon: "person-outline" as const };
+    case "Delivery": return { bg: "#FFF7ED", text: "#EA580C", icon: "cube-outline" as const };
+    case "Service":  return { bg: "#EFF6FF", text: "#2563EB", icon: "construct-outline" as const };
+    case "Family":   return { bg: "#F3E8FF", text: "#9333EA", icon: "people-outline" as const };
+    default:         return { bg: "#F3F4F6", text: "#6B7280", icon: "person-outline" as const };
   }
 };
 
-// Filter Tab Component
-const FilterTab = ({
-  label,
-  isSelected,
-  onPress,
-  count,
-}: {
-  label: string;
-  isSelected: boolean;
-  onPress: () => void;
-  count: number;
-}) => (
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+const FilterTab = ({ label, isSelected, onPress, count }: { label: string; isSelected: boolean; onPress: () => void; count: number }) => (
   <TouchableOpacity
     onPress={onPress}
-    className={`px-4 py-2 rounded-full mr-2 flex-row items-center ${
-      isSelected ? "bg-[#0D9488]" : "bg-gray-100"
-    }`}
+    className={`px-4 py-2 rounded-full mr-2 flex-row items-center ${isSelected ? "bg-[#0D9488]" : "bg-gray-100"}`}
     activeOpacity={0.7}
   >
-    <Text
-      className={`text-sm font-semibold ${
-        isSelected ? "text-white" : "text-gray-600"
-      }`}
-    >
-      {label}
-    </Text>
-    <View
-      className={`ml-2 px-1.5 py-0.5 rounded-full ${
-        isSelected ? "bg-white/20" : "bg-gray-200"
-      }`}
-    >
-      <Text
-        className={`text-xs font-bold ${
-          isSelected ? "text-white" : "text-gray-500"
-        }`}
-      >
-        {count}
-      </Text>
+    <Text className={`text-sm font-semibold ${isSelected ? "text-white" : "text-gray-600"}`}>{label}</Text>
+    <View className={`ml-2 px-1.5 py-0.5 rounded-full ${isSelected ? "bg-white/20" : "bg-gray-200"}`}>
+      <Text className={`text-xs font-bold ${isSelected ? "text-white" : "text-gray-500"}`}>{count}</Text>
     </View>
   </TouchableOpacity>
 );
 
-// History Item Component
 const HistoryItem = ({
   item,
   onReactivate,
@@ -155,116 +111,40 @@ const HistoryItem = ({
   return (
     <View
       className="bg-white rounded-3xl p-5 mb-4 border border-gray-100"
-      style={{
-        shadowColor: "#0D9488",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.08,
-        shadowRadius: 16,
-        elevation: 5,
-      }}
+      style={{ shadowColor: "#0D9488", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.08, shadowRadius: 16, elevation: 5 }}
     >
-      {/* Top Section */}
       <View className="flex-row">
-        {/* QR Icon with Gradient */}
-        <View
-          className="w-16 h-16 rounded-2xl items-center justify-center mr-4"
-          style={{ overflow: "hidden" }}
-        >
-          <LinearGradient
-            colors={["#0D9488", "#0F766E"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={{
-              position: "absolute",
-              left: 0,
-              right: 0,
-              top: 0,
-              bottom: 0,
-            }}
-          />
+        <View className="w-16 h-16 rounded-2xl items-center justify-center mr-4" style={{ overflow: "hidden" }}>
+          <LinearGradient colors={["#0D9488", "#0F766E"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ position: "absolute", left: 0, right: 0, top: 0, bottom: 0 }} />
           <MaterialCommunityIcons name="qrcode" size={32} color="white" />
         </View>
-
-        {/* Info Section */}
         <View className="flex-1">
-          {/* Name */}
-          <Text
-            className="text-lg font-bold text-gray-900 mb-2"
-            numberOfLines={1}
-          >
-            {item.name}
-          </Text>
-
-          {/* Tags Row */}
+          <Text className="text-lg font-bold text-gray-900 mb-2" numberOfLines={1}>{item.name}</Text>
           <View className="flex-row flex-wrap gap-2 mb-2">
-            {/* Type Badge with Icon */}
-            <View
-              className="flex-row items-center px-3 py-1 rounded-full"
-              style={{ backgroundColor: typeConfig.bg }}
-            >
-              <Ionicons
-                name={typeConfig.icon}
-                size={12}
-                color={typeConfig.text}
-              />
-              <Text
-                className="text-xs font-semibold ml-1"
-                style={{ color: typeConfig.text }}
-              >
-                {item.type}
-              </Text>
+            <View className="flex-row items-center px-3 py-1 rounded-full" style={{ backgroundColor: typeConfig.bg }}>
+              <Ionicons name={typeConfig.icon} size={12} color={typeConfig.text} />
+              <Text className="text-xs font-semibold ml-1" style={{ color: typeConfig.text }}>{item.type}</Text>
             </View>
-
-            {/* Status Badge */}
-            <View
-              className={`flex-row items-center px-3 py-1 rounded-full ${statusConfig.bg}`}
-            >
-              <Ionicons
-                name={statusConfig.icon}
-                size={12}
-                color={statusConfig.iconColor}
-              />
-              <Text
-                className={`text-xs font-semibold ml-1 ${statusConfig.text}`}
-              >
-                {item.status}
-              </Text>
+            <View className={`flex-row items-center px-3 py-1 rounded-full ${statusConfig.bg}`}>
+              <Ionicons name={statusConfig.icon} size={12} color={statusConfig.iconColor} />
+              <Text className={`text-xs font-semibold ml-1 ${statusConfig.text}`}>{item.status}</Text>
             </View>
           </View>
-
-          {/* Date & Access Code */}
           <View className="flex-row items-center">
             <Ionicons name="time-outline" size={14} color="#9CA3AF" />
-            <Text className="text-gray-400 text-xs ml-1 font-medium">
-              {item.date}
-            </Text>
+            <Text className="text-gray-400 text-xs ml-1 font-medium">{item.date}</Text>
           </View>
         </View>
       </View>
 
-      {/* Access Code Box */}
-      <View className="bg-gray-50 rounded-2xl p-4 mt-4 mb-4 flex-row items-center justify-between">
-        <View className="flex-1">
-          <Text className="text-xs text-gray-400 mb-1 font-medium">
-            Access Code
-          </Text>
-          <Text className="text-base font-bold text-gray-800 tracking-wider">
-            {item.accessCode}
-          </Text>
-        </View>
-        <TouchableOpacity
-          className="w-10 h-10 bg-[#0D9488]/10 rounded-xl items-center justify-center"
-          activeOpacity={0.7}
-        >
-          <Ionicons name="copy-outline" size={20} color="#0D9488" />
-        </TouchableOpacity>
+      <View className="bg-gray-50 rounded-2xl p-4 mt-4 mb-4">
+        <Text className="text-xs text-gray-400 mb-1 font-medium">Access Code</Text>
+        <Text className="text-base font-bold text-gray-800 tracking-wider">{item.accessCode}</Text>
       </View>
 
-      {/* Action Buttons */}
       <View className="flex-row gap-3">
-        {/* Re-activate Button */}
         <TouchableOpacity
-          className="flex-1 flex-row items-center justify-center py-3.5 rounded-xl overflow-hidden"
+          className="flex-1 flex-row items-center justify-center py-3.5 rounded-xl"
           activeOpacity={0.8}
           onPress={() => onReactivate(item)}
           style={{ backgroundColor: "#0D9488" }}
@@ -272,8 +152,6 @@ const HistoryItem = ({
           <Ionicons name="refresh" size={18} color="white" />
           <Text className="text-white font-bold ml-2">Re-activate</Text>
         </TouchableOpacity>
-
-        {/* Delete Button */}
         <TouchableOpacity
           className="w-14 bg-red-50 items-center justify-center py-3.5 rounded-xl"
           activeOpacity={0.8}
@@ -286,18 +164,12 @@ const HistoryItem = ({
   );
 };
 
-// Empty State Component
 const EmptyState = ({ filter }: { filter: StatusType }) => (
   <View className="items-center justify-center py-16">
-    <View
-      className="w-24 h-24 rounded-full items-center justify-center mb-6"
-      style={{ backgroundColor: "#E6F7F6" }}
-    >
+    <View className="w-24 h-24 rounded-full items-center justify-center mb-6" style={{ backgroundColor: "#E6F7F6" }}>
       <MaterialCommunityIcons name="history" size={48} color="#0D9488" />
     </View>
-    <Text className="text-xl font-bold text-gray-800 mb-2">
-      No History Found
-    </Text>
+    <Text className="text-xl font-bold text-gray-800 mb-2">No History Found</Text>
     <Text className="text-gray-500 text-center px-8 text-sm">
       {filter === "all"
         ? "Your QR code history will appear here once you create and use access passes."
@@ -306,98 +178,95 @@ const EmptyState = ({ filter }: { filter: StatusType }) => (
   </View>
 );
 
+// ─── Main Screen ──────────────────────────────────────────────────────────────
+
 export default function QRHistoryScreen() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
+  const alert = useCustomAlert();
+
   const [selectedFilter, setSelectedFilter] = useState<StatusType>("all");
+  const [historyData, setHistoryData] = useState<HistoryItemData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Sample History Data
-  const historyData: HistoryItemData[] = [
-    {
-      id: "1",
-      name: "Sarah Johnson",
-      type: "Visitor",
-      date: "Dec 10, 2024 8:00 PM",
-      status: "Expired",
-      accessCode: "VIS-2024-098",
-      usageCount: 1,
-    },
-    {
-      id: "2",
-      name: "Ahmed Ali",
-      type: "Delivery",
-      date: "Dec 12, 2024 2:30 PM",
-      status: "Used",
-      accessCode: "DEL-2024-156",
-      usageCount: 3,
-    },
-    {
-      id: "3",
-      name: "Mohamed Hassan",
-      type: "Service",
-      date: "Dec 15, 2024 10:00 AM",
-      status: "Expired",
-      accessCode: "SRV-2024-042",
-      usageCount: 1,
-    },
-    {
-      id: "4",
-      name: "Fatima Ahmed",
-      type: "Family",
-      date: "Dec 18, 2024 4:00 PM",
-      status: "Active",
-      accessCode: "FAM-2024-077",
-      usageCount: 5,
-    },
-  ];
+  const fetchHistory = useCallback(async (isRefresh = false) => {
+    if (isRefresh) setIsRefreshing(true);
+    else setIsLoading(true);
+    try {
+      const codes = await getMyAccessCodes();
+      setHistoryData(codes.map(mapAccessCodeToHistory));
+    } catch {
+      alert.show("Error", "Failed to load history. Pull down to retry.", [{ text: "OK" }], "warning");
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  }, []);
 
-  // Filter data based on selected filter
-  const filteredData =
-    selectedFilter === "all"
-      ? historyData
-      : historyData.filter((item) => item.status === selectedFilter);
+  useEffect(() => { fetchHistory(); }, [fetchHistory]);
 
-  // Get counts for each filter
-  const getCounts = () => ({
+  const filteredData = selectedFilter === "all"
+    ? historyData
+    : historyData.filter((item) => item.status === selectedFilter);
+
+  const counts = {
     all: historyData.length,
-    Active: historyData.filter((item) => item.status === "Active").length,
-    Used: historyData.filter((item) => item.status === "Used").length,
-    Expired: historyData.filter((item) => item.status === "Expired").length,
-  });
+    Active: historyData.filter((i) => i.status === "Active").length,
+    Used:   historyData.filter((i) => i.status === "Used").length,
+    Expired: historyData.filter((i) => i.status === "Expired").length,
+  };
 
-  const counts = getCounts();
-
-  // Handlers
+  // ── Reactivate ──────────────────────────────────────────────────────────────
   const handleReactivate = (item: HistoryItemData) => {
-    Alert.alert(
+    alert.show(
       "Re-activate Pass",
-      `Would you like to re-activate the pass for ${item.name}?`,
+      `Re-activate the pass for ${item.name}?`,
       [
         { text: "Cancel", style: "cancel" },
         {
           text: "Re-activate",
-          onPress: () => {
-            Alert.alert("Success", "Pass has been re-activated!");
+          onPress: async () => {
+            try {
+              const validFrom  = new Date().toISOString();
+              const validUntil = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+              const newCode = await reactivateAccessCode(item.id, validFrom, validUntil);
+              setHistoryData((prev) => [
+                mapAccessCodeToHistory(newCode),
+                ...prev.filter((i) => i.id !== item.id),
+              ]);
+              alert.show("Success", "Pass has been re-activated!", [{ text: "OK" }], "success");
+            } catch {
+              alert.show("Error", "Failed to re-activate pass.", [{ text: "OK" }], "warning");
+            }
           },
         },
       ],
+      "info"
     );
   };
 
+  // ── Delete ──────────────────────────────────────────────────────────────────
   const handleDelete = (item: HistoryItemData) => {
-    Alert.alert(
+    alert.show(
       "Delete Pass",
-      `Are you sure you want to delete the pass for ${item.name}? This action cannot be undone.`,
+      `Delete pass for ${item.name}? This cannot be undone.`,
       [
         { text: "Cancel", style: "cancel" },
         {
           text: "Delete",
           style: "destructive",
-          onPress: () => {
-            Alert.alert("Deleted", "Pass has been removed from history.");
+          onPress: async () => {
+            try {
+              await revokeAccessCode(item.id);
+              setHistoryData((prev) => prev.filter((i) => i.id !== item.id));
+            } catch {
+              alert.show("Error", "Failed to delete pass.", [{ text: "OK" }], "warning");
+            }
           },
         },
       ],
+      "danger"
     );
   };
 
@@ -405,111 +274,61 @@ export default function QRHistoryScreen() {
     <View className="flex-1 bg-white">
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
-      {/* Header with Logo */}
+      {/* Header */}
       <View className="px-4 pb-4" style={{ paddingTop: insets.top + 12 }}>
-        {/* Navigation Row */}
         <View className="flex-row items-center justify-between mb-4">
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            className="w-10 h-10 bg-gray-100 rounded-xl items-center justify-center"
-            activeOpacity={0.7}
-          >
+          <TouchableOpacity onPress={() => navigation.goBack()} className="w-10 h-10 bg-gray-100 rounded-xl items-center justify-center" activeOpacity={0.7}>
             <Ionicons name="arrow-back" size={22} color="#1F2937" />
           </TouchableOpacity>
-
-          <TouchableOpacity
-            className="w-10 h-10 bg-gray-100 rounded-xl items-center justify-center"
-            activeOpacity={0.7}
-          >
-            <Ionicons name="search-outline" size={22} color="#1F2937" />
+          <TouchableOpacity onPress={() => fetchHistory()} className="w-10 h-10 bg-gray-100 rounded-xl items-center justify-center" activeOpacity={0.7}>
+            <Ionicons name="refresh-outline" size={22} color="#1F2937" />
           </TouchableOpacity>
         </View>
 
-        {/* Title with Logo */}
         <View className="flex-row items-center mb-4">
-          {/* History Logo */}
-          <View
-            className="w-14 h-14 rounded-2xl items-center justify-center mr-4"
-            style={{ overflow: "hidden" }}
-          >
-            <LinearGradient
-              colors={["#0D9488", "#0F766E"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={{
-                position: "absolute",
-                left: 0,
-                right: 0,
-                top: 0,
-                bottom: 0,
-              }}
-            />
+          <View className="w-14 h-14 rounded-2xl items-center justify-center mr-4" style={{ overflow: "hidden" }}>
+            <LinearGradient colors={["#0D9488", "#0F766E"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ position: "absolute", left: 0, right: 0, top: 0, bottom: 0 }} />
             <MaterialCommunityIcons name="history" size={28} color="white" />
           </View>
-
           <View className="flex-1">
             <Text className="text-2xl font-bold text-gray-900">QR History</Text>
-            <Text className="text-gray-500 text-sm mt-0.5">
-              View and manage your past access passes
-            </Text>
+            <Text className="text-gray-500 text-sm mt-0.5">View and manage your past access passes</Text>
           </View>
         </View>
 
-        {/* Filter Tabs */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          className="mb-2"
-        >
-          <FilterTab
-            label="All"
-            isSelected={selectedFilter === "all"}
-            onPress={() => setSelectedFilter("all")}
-            count={counts.all}
-          />
-          <FilterTab
-            label="Active"
-            isSelected={selectedFilter === "Active"}
-            onPress={() => setSelectedFilter("Active")}
-            count={counts.Active}
-          />
-          <FilterTab
-            label="Used"
-            isSelected={selectedFilter === "Used"}
-            onPress={() => setSelectedFilter("Used")}
-            count={counts.Used}
-          />
-          <FilterTab
-            label="Expired"
-            isSelected={selectedFilter === "Expired"}
-            onPress={() => setSelectedFilter("Expired")}
-            count={counts.Expired}
-          />
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-2">
+          {(["all", "Active", "Used", "Expired"] as StatusType[]).map((f) => (
+            <FilterTab key={f} label={f === "all" ? "All" : f} isSelected={selectedFilter === f} onPress={() => setSelectedFilter(f)} count={counts[f]} />
+          ))}
         </ScrollView>
       </View>
 
-      {/* List */}
-      <ScrollView
-        className="flex-1 px-4"
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 40 }}
-      >
-        {filteredData.length > 0 ? (
-          filteredData.map((item) => (
-            <HistoryItem
-              key={item.id}
-              item={item}
-              onReactivate={handleReactivate}
-              onDelete={handleDelete}
-            />
-          ))
-        ) : (
-          <EmptyState filter={selectedFilter} />
-        )}
-      </ScrollView>
+      {/* Content */}
+      {isLoading ? (
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+          <ActivityIndicator size="large" color="#0D9488" />
+          <Text style={{ color: "#9CA3AF", marginTop: 12 }}>Loading history...</Text>
+        </View>
+      ) : (
+        <ScrollView
+          className="flex-1 px-4"
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 40 }}
+          refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={() => fetchHistory(true)} tintColor="#0D9488" />}
+        >
+          {filteredData.length > 0
+            ? filteredData.map((item) => (
+                <HistoryItem key={item.id} item={item} onReactivate={handleReactivate} onDelete={handleDelete} />
+              ))
+            : <EmptyState filter={selectedFilter} />
+          }
+        </ScrollView>
+      )}
 
-      {/* Bottom Navigation */}
       <AppBottomNav />
+
+      {/* Custom Alert — must be last to render on top */}
+      <alert.Component />
     </View>
   );
 }
