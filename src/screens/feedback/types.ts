@@ -36,7 +36,7 @@ export interface FeedbackPost {
 }
 
 // Post status types for My Posts screen
-export type PostStatus = "approved" | "under_review" | "not_approved";
+export type PostStatus = "approved" | "under_review" | "pending" | "not_approved";
 
 // Status display config
 export interface StatusConfig {

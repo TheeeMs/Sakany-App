@@ -96,8 +96,8 @@ export function mapCategoryToLabel(cat: string): string {
 
 /** Map backend status → frontend PostStatus */
 export function mapStatus(status: FeedbackStatus): "approved" | "under_review" | "not_approved" {
-  if (status === "APPROVED" || status === "OPEN" || status === "ADDRESSED") return "approved";
-  if (status === "UNDER_REVIEW") return "under_review";
+  if (status === "APPROVED" || status === "ADDRESSED") return "approved";
+  if (status === "OPEN" || status === "UNDER_REVIEW") return "under_review";
   return "not_approved"; // CLOSED
 }
 
