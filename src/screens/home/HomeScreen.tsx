@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { View, Text, ScrollView, TouchableOpacity } from "react-native";
+import { Alert, View, Text, ScrollView, TouchableOpacity } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { CompositeNavigationProp } from "@react-navigation/native";
@@ -8,7 +8,10 @@ import type { RootStackParamList, MainTabParamList } from "../../navigation";
 import { Ionicons } from "@expo/vector-icons";
 import { getEvents, getMaintenanceRequestsByResident } from "../../services";
 import { getMyFeedback, type FeedbackStatus } from "../../services/feedback";
-import type { MaintenanceApiStatus } from "../../services/maintenance";
+import {
+  getMaintenanceRequestById,
+  type MaintenanceApiStatus,
+} from "../../services/maintenance";
 import { useAuthStore } from "../../store/authStore";
 
 // Types
@@ -42,6 +45,61 @@ function formatShortDate(iso?: string | null): string {
     day: "numeric",
     year: "numeric",
   });
+}
+
+function toUiLocation(value?: string | null): string {
+  const normalized = (value || "").toUpperCase();
+  if (normalized.includes("NEIGHBOR")) {
+    return "Neighborhood";
+  }
+  return "At Home";
+}
+
+function toUiCategory(value?: string | null): string {
+  const normalized = (value || "").trim().toLowerCase();
+
+  if (normalized.includes("plumb")) return "Plumbing";
+  if (normalized.includes("elect")) return "Electrical";
+  if (normalized.includes("ac") || normalized.includes("heat"))
+    return "AC/Heating";
+  if (normalized.includes("house")) return "Housekeeping";
+  if (normalized.includes("paint")) return "Painting";
+  if (normalized.includes("carpen")) return "Carpentry";
+  if (normalized.includes("garden")) return "Garden";
+  if (normalized.includes("alum")) return "Aluminum";
+
+  return "Other";
+}
+
+function toUiMaintenanceStatus(value?: string | null): string {
+  switch ((value || "").toUpperCase()) {
+    case "IN_PROGRESS":
+    case "ASSIGNED":
+    case "STARTED":
+      return "In Progress";
+    case "RESOLVED":
+    case "COMPLETED":
+      return "Completed";
+    case "REJECTED":
+      return "Rejected";
+    case "CANCELLED":
+      return "Cancelled";
+    default:
+      return "Pending";
+  }
+}
+
+function toUiActionStatus(status: ActionStatus): string {
+  switch (status) {
+    case "completed":
+      return "Completed";
+    case "paid":
+      return "Paid";
+    case "cancelled":
+      return "Cancelled";
+    default:
+      return "Pending";
+  }
 }
 
 function mapMaintenanceStatus(
@@ -136,6 +194,8 @@ export default function HomeScreen() {
                 item.description || item.category || "Maintenance update",
               date: formatShortDate(item.updatedAt || item.createdAt),
               status: mapMaintenanceStatus(item.status),
+              source: "maintenance",
+              sourceId: item.id,
             } satisfies RecentAction,
             timestamp: Number.isNaN(timestamp) ? 0 : timestamp,
           };
@@ -150,6 +210,8 @@ export default function HomeScreen() {
               description: post.content,
               date: formatShortDate(post.createdAt),
               status: mapFeedbackStatus(post.status),
+              source: "feedback",
+              sourceId: post.id,
             } satisfies RecentAction,
             timestamp: Number.isNaN(timestamp) ? 0 : timestamp,
           };
@@ -177,6 +239,40 @@ export default function HomeScreen() {
       isActive = false;
     };
   }, [navigation, user?.id]);
+
+  const handleRecentActionPress = async (action: RecentAction) => {
+    if (action.source === "maintenance" && action.sourceId) {
+      try {
+        const details = await getMaintenanceRequestById(action.sourceId);
+        Alert.alert(
+          details.title?.trim() || action.title,
+          [
+            `Description: ${details.description?.trim() || action.description}`,
+            `Status: ${toUiMaintenanceStatus(details.status)}`,
+            `Category: ${toUiCategory(details.category)}`,
+            `Location: ${toUiLocation(details.locationLabel ?? details.location)}`,
+            `Date: ${action.date}`,
+          ].join("\n"),
+          [{ text: "Close", style: "cancel" }],
+        );
+      } catch {
+        Alert.alert("Error", "Failed to load maintenance details.");
+      }
+      return;
+    }
+
+    if (action.source === "feedback") {
+      Alert.alert(
+        action.title,
+        [
+          action.description,
+          `Status: ${toUiActionStatus(action.status)}`,
+          `Date: ${action.date}`,
+        ].join("\n"),
+        [{ text: "Close", style: "cancel" }],
+      );
+    }
+  };
 
   // Quick Actions Configuration
   const quickActions = [
@@ -287,7 +383,11 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </View>
           {recentActions.map((action) => (
-            <RecentActionCard key={action.id} action={action} />
+            <RecentActionCard
+              key={action.id}
+              action={action}
+              onPress={() => handleRecentActionPress(action)}
+            />
           ))}
         </View>
       </ScrollView>

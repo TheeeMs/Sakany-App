@@ -1,13 +1,17 @@
 import React from "react";
-import { View, Text } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import type { RecentAction, ActionStatus } from "../types";
 
 interface RecentActionCardProps {
   action: RecentAction;
+  onPress?: () => void;
 }
 
-export default function RecentActionCard({ action }: RecentActionCardProps) {
+export default function RecentActionCard({
+  action,
+  onPress,
+}: RecentActionCardProps) {
   const getStatusConfig = (
     status: ActionStatus,
   ): { label: string; bgColor: string; textColor: string } => {
@@ -42,7 +46,10 @@ export default function RecentActionCard({ action }: RecentActionCardProps) {
   const statusConfig = getStatusConfig(action.status);
 
   return (
-    <View
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.85}
+      disabled={!onPress}
       className="bg-white rounded-2xl p-4 mb-3"
       style={{
         shadowColor: "#000",
@@ -72,6 +79,6 @@ export default function RecentActionCard({ action }: RecentActionCardProps) {
           </Text>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }

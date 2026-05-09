@@ -17,6 +17,8 @@ export interface RecentAction {
   description: string;
   date: string;
   status: ActionStatus;
+  source?: "maintenance" | "feedback";
+  sourceId?: string;
 }
 
 // Banner Types
