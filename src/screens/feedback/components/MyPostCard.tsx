@@ -64,13 +64,27 @@ const STATUS_CONFIG: Record<PostStatus, StatusDisplay> = {
   },
 };
 
+const DEFAULT_CATEGORY_CONFIG: CategoryConfig = {
+  label: "Other",
+  backgroundColor: "#F3F4F6",
+  textColor: "#6A7282",
+};
+
+const DEFAULT_STATUS_CONFIG: StatusDisplay = {
+  label: "Under Review",
+  backgroundColor: "#DBEAFE",
+  textColor: "#1447E6",
+  iconName: "time-outline",
+};
+
 interface MyPostCardProps {
   post: MyPost;
 }
 
 export default function MyPostCard({ post }: MyPostCardProps) {
-  const categoryConfig = CATEGORY_CONFIG[post.category];
-  const statusConfig = STATUS_CONFIG[post.status];
+  const categoryConfig =
+    CATEGORY_CONFIG[post.category] ?? DEFAULT_CATEGORY_CONFIG;
+  const statusConfig = STATUS_CONFIG[post.status] ?? DEFAULT_STATUS_CONFIG;
 
   return (
     <View
