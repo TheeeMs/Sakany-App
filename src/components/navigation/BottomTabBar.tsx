@@ -136,10 +136,6 @@ export default function BottomTabBar({
   return (
     <View
       style={{
-        position: "absolute",
-        bottom: 0,
-        left: 0,
-        right: 0,
         backgroundColor: "#FFFFFF",
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,

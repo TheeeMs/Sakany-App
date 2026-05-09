@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { View, Text, ScrollView, TouchableOpacity } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -6,9 +6,13 @@ import type { CompositeNavigationProp } from "@react-navigation/native";
 import type { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import type { RootStackParamList, MainTabParamList } from "../../navigation";
 import { Ionicons } from "@expo/vector-icons";
+import { getEvents, getMaintenanceRequestsByResident } from "../../services";
+import { getMyFeedback, type FeedbackStatus } from "../../services/feedback";
+import type { MaintenanceApiStatus } from "../../services/maintenance";
+import { useAuthStore } from "../../store/authStore";
 
 // Types
-import type { UserInfo, Banner, RecentAction } from "./types";
+import type { UserInfo, Banner, RecentAction, ActionStatus } from "./types";
 
 // Components
 import {
@@ -23,54 +27,156 @@ type NavigationProp = CompositeNavigationProp<
   NativeStackNavigationProp<RootStackParamList>
 >;
 
+function formatShortDate(iso?: string | null): string {
+  if (!iso) {
+    return "";
+  }
+
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function mapMaintenanceStatus(
+  status?: MaintenanceApiStatus | null,
+): ActionStatus {
+  switch (status) {
+    case "RESOLVED":
+      return "completed";
+    case "REJECTED":
+    case "CANCELLED":
+      return "cancelled";
+    case "IN_PROGRESS":
+    case "ASSIGNED":
+    case "PENDING":
+    default:
+      return "pending";
+  }
+}
+
+function mapFeedbackStatus(status: FeedbackStatus): ActionStatus {
+  switch (status) {
+    case "APPROVED":
+    case "ADDRESSED":
+      return "completed";
+    case "CLOSED":
+      return "cancelled";
+    case "OPEN":
+    case "UNDER_REVIEW":
+    default:
+      return "pending";
+  }
+}
+
 export default function HomeScreen() {
   const navigation = useNavigation<NavigationProp>();
+  const user = useAuthStore((state) => state.user);
+  const unitId = useAuthStore((state) => state.unitId);
+  const [banners, setBanners] = useState<Banner[]>([]);
+  const [recentActions, setRecentActions] = useState<RecentAction[]>([]);
 
-  // User Info (in real app, fetch from API or store)
-  const userInfo: UserInfo = {
-    name: "Ahmed",
-    building: "Building A",
-    unit: "Unit 205",
-  };
+  const userInfo: UserInfo = useMemo(() => {
+    const fullName = user ? `${user.firstName} ${user.lastName}`.trim() : "";
+    return {
+      name: fullName || "Resident",
+      building: "",
+      unit: unitId ? `Unit ${unitId}` : "",
+    };
+  }, [unitId, user]);
 
-  // Banners Data
-  const banners: Banner[] = [
-    {
-      id: "1",
-      title: "New Mall Open Now!",
-      description:
-        "Shops, cafes, and services are now available for all residents.",
-      buttonText: "Explore",
-      image: require("../../../assets/build.png"),
-      onPress: () => console.log("Banner pressed"),
-    },
-    {
-      id: "2",
-      title: "Join Our Community Event",
-      description: "Open Air Cinema this Friday at 8 PM",
-      buttonText: "Explore",
-      image: require("../../../assets/build.png"),
-      onPress: () => console.log("Event banner pressed"),
-    },
-  ];
+  useEffect(() => {
+    let isActive = true;
 
-  // Recent Actions Data
-  const recentActions: RecentAction[] = [
-    {
-      id: "1",
-      title: "AC Repair Completed",
-      description: "Your AC repair request has been completed",
-      date: "Dec 12, 2024",
-      status: "completed",
-    },
-    {
-      id: "2",
-      title: "November Fee Paid",
-      description: "Monthly management fee - $450.00",
-      date: "Nov 1, 2024",
-      status: "paid",
-    },
-  ];
+    const loadHomeData = async () => {
+      try {
+        const [events, feedbackSummary, maintenance] = await Promise.all([
+          getEvents("APPROVED"),
+          getMyFeedback(),
+          user?.id
+            ? getMaintenanceRequestsByResident(user.id)
+            : Promise.resolve([]),
+        ]);
+
+        if (!isActive) {
+          return;
+        }
+
+        const openEvents = events
+          .sort(
+            (a, b) =>
+              new Date(a.startDate).getTime() - new Date(b.startDate).getTime(),
+          )
+          .slice(0, 2)
+          .map<Banner>((event) => ({
+            id: event.id,
+            title: event.title,
+            description: event.description,
+            image: event.imageUrl ?? require("../../../assets/build.png"),
+            buttonText: "Explore",
+            onPress: () =>
+              navigation.navigate("EventDetails", { eventId: event.id }),
+          }));
+
+        const maintenanceActions = maintenance.slice(0, 2).map((item) => {
+          const timestamp = new Date(
+            item.updatedAt || item.createdAt || 0,
+          ).getTime();
+          return {
+            action: {
+              id: item.id,
+              title: item.title || "Maintenance Request",
+              description:
+                item.description || item.category || "Maintenance update",
+              date: formatShortDate(item.updatedAt || item.createdAt),
+              status: mapMaintenanceStatus(item.status),
+            } satisfies RecentAction,
+            timestamp: Number.isNaN(timestamp) ? 0 : timestamp,
+          };
+        });
+
+        const feedbackActions = feedbackSummary.posts.map((post) => {
+          const timestamp = new Date(post.createdAt).getTime();
+          return {
+            action: {
+              id: post.id,
+              title: post.title,
+              description: post.content,
+              date: formatShortDate(post.createdAt),
+              status: mapFeedbackStatus(post.status),
+            } satisfies RecentAction,
+            timestamp: Number.isNaN(timestamp) ? 0 : timestamp,
+          };
+        });
+
+        const mergedActions = [...maintenanceActions, ...feedbackActions]
+          .filter((item) => item.action.date !== "")
+          .sort((a, b) => b.timestamp - a.timestamp)
+          .slice(0, 2)
+          .map((item) => item.action);
+
+        setBanners(openEvents);
+        setRecentActions(mergedActions);
+      } catch (error) {
+        if (isActive) {
+          setBanners([]);
+          setRecentActions([]);
+        }
+      }
+    };
+
+    loadHomeData();
+
+    return () => {
+      isActive = false;
+    };
+  }, [navigation, user?.id]);
 
   // Quick Actions Configuration
   const quickActions = [
@@ -165,7 +271,10 @@ export default function HomeScreen() {
             <Text className="text-gray-900 text-lg font-bold">
               Recent Actions
             </Text>
-            <TouchableOpacity className="flex-row items-center">
+            <TouchableOpacity
+              className="flex-row items-center"
+              onPress={() => navigation.navigate("Maintenance")}
+            >
               <Text className="text-[#0D9488] text-sm font-semibold">
                 View all
               </Text>
