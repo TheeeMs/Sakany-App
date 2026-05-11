@@ -42,11 +42,6 @@ export default function ActiveRequestCard({
 
       <View className="flex-row items-center justify-between">
         <RequestStatusBadge status={request.status} />
-        {request.technician && (
-          <Text className="text-[13px] text-[#6B7280]">
-            Tech: {request.technician}
-          </Text>
-        )}
       </View>
     </TouchableOpacity>
   );

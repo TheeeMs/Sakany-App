@@ -20,6 +20,18 @@ const TAB_CONFIG: Record<string, TabConfig> = {
     activeIcon: "home",
     label: "Home",
   },
+  TechJobs: {
+    name: "TechJobs",
+    icon: "clipboard-outline",
+    activeIcon: "clipboard",
+    label: "Jobs",
+  },
+  TechHistory: {
+    name: "TechHistory",
+    icon: "time-outline",
+    activeIcon: "time",
+    label: "History",
+  },
   Maintenance: {
     name: "Maintenance",
     icon: "build-outline",
