@@ -125,6 +125,15 @@ export default function QRScanScreen() {
   const [showUsed, setShowUsed] = useState(false);
   const [showLogoutMenu, setShowLogoutMenu] = useState(false);
 
+  const resetScanView = useCallback(() => {
+    setShowSuccess(false);
+    setShowError(false);
+    setShowUsed(false);
+    setScanDetails(null);
+    setLastScanned(null);
+    setManualCode("");
+  }, []);
+
   const hasPermission = permission?.granted === true;
 
   useEffect(() => {
@@ -178,6 +187,7 @@ export default function QRScanScreen() {
         const isUsed = usedPattern.test(message);
         setShowUsed(isUsed);
         setShowError(!isUsed);
+        setIsCameraOpen(false);
         alert.show("Scan Failed", message, [{ text: "OK" }], "danger");
       } finally {
         setIsSubmitting(false);
@@ -227,10 +237,13 @@ export default function QRScanScreen() {
   }, [hasPermission, requestPermission]);
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+    <SafeAreaView className="flex-1 bg-[#F8FAFC]">
+      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
 
-      <View style={{ paddingTop: insets.top + 8 }} className="px-4 pb-4">
+      <View
+        style={{ paddingTop: insets.top + 8 }}
+        className="px-4 pb-4 bg-white border-b border-gray-100"
+      >
         <View className="flex-row items-center justify-between">
           <View className="flex-row items-center">
             <View className="w-10 h-10 rounded-xl items-center justify-center bg-[#E6F7F6]">
@@ -253,13 +266,13 @@ export default function QRScanScreen() {
         </View>
       </View>
 
-      <View className="flex-1 px-4">
+      <View className="flex-1 px-4 pt-5">
         <TouchableOpacity
           onPress={() => {
             setShowSuccess(false);
             setIsCameraOpen(true);
           }}
-          className="rounded-2xl px-5 py-4 flex-row items-center justify-between"
+          className="rounded-[20px] px-5 py-4 flex-row items-center justify-between border border-[#0B8379]"
           style={{ backgroundColor: "#0D9488" }}
           activeOpacity={0.8}
         >
@@ -298,18 +311,27 @@ export default function QRScanScreen() {
         ) : null}
 
         {showError ? (
-          <View className="mt-4 bg-rose-50 border border-rose-100 rounded-2xl px-4 py-4 flex-row items-center">
-            <View className="w-10 h-10 rounded-full bg-rose-100 items-center justify-center">
-              <Ionicons name="alert" size={18} color="#B91C1C" />
+          <View className="mt-4 bg-rose-50 border border-rose-100 rounded-2xl px-4 py-4">
+            <View className="flex-row items-center">
+              <View className="w-10 h-10 rounded-full bg-rose-100 items-center justify-center">
+                <Ionicons name="alert" size={18} color="#B91C1C" />
+              </View>
+              <View className="ml-3">
+                <Text className="text-rose-800 font-semibold">
+                  في عطل في ال qr
+                </Text>
+                <Text className="text-rose-700 text-xs mt-1">
+                  حاول تاني او ادخل الكود يدوي
+                </Text>
+              </View>
             </View>
-            <View className="ml-3">
-              <Text className="text-rose-800 font-semibold">
-                في عطل في ال qr
-              </Text>
-              <Text className="text-rose-700 text-xs mt-1">
-                حاول تاني او ادخل الكود يدوي
-              </Text>
-            </View>
+            <TouchableOpacity
+              onPress={resetScanView}
+              className="mt-4 rounded-xl bg-rose-100 py-3 items-center"
+              activeOpacity={0.8}
+            >
+              <Text className="text-rose-700 font-semibold">تم</Text>
+            </TouchableOpacity>
           </View>
         ) : null}
 
@@ -333,56 +355,72 @@ export default function QRScanScreen() {
               </Text>
             </View>
             <View className="flex-row justify-between mb-2">
-              <Text className="text-xs text-gray-500">الاسم</Text>
               <Text className="text-sm font-semibold text-gray-900">
                 {scanDetails.visitorName}
               </Text>
+              <Text className="text-xs text-gray-500">الاسم</Text>
             </View>
             <View className="flex-row justify-between mb-2">
-              <Text className="text-xs text-gray-500">النوع</Text>
               <Text className="text-sm font-semibold text-gray-900">
                 {mapPurposeToArabic(scanDetails.purpose)}
               </Text>
+              <Text className="text-xs text-gray-500">النوع</Text>
             </View>
             <View className="flex-row justify-between mb-2">
-              <Text className="text-xs text-gray-500">الحالة</Text>
               <Text className="text-sm font-semibold text-gray-900">
                 {mapStatusToArabic(scanDetails.status)}
               </Text>
+              <Text className="text-xs text-gray-500">الحالة</Text>
             </View>
             <View className="flex-row justify-between">
-              <Text className="text-xs text-gray-500">صالح حتى</Text>
               <Text className="text-sm font-semibold text-gray-900">
                 {formatDateTime(scanDetails.validUntil)}
               </Text>
+              <Text className="text-xs text-gray-500">صالح حتى</Text>
             </View>
             <View className="flex-row justify-between mt-2">
-              <Text className="text-xs text-gray-500">وقت الدخول</Text>
               <Text className="text-sm font-semibold text-gray-900">
                 {formatDateTime(scanDetails.usedAt)}
               </Text>
+              <Text className="text-xs text-gray-500">وقت الدخول</Text>
             </View>
+            <TouchableOpacity
+              onPress={resetScanView}
+              className="mt-4 rounded-xl bg-gray-100 py-3 items-center"
+              activeOpacity={0.8}
+            >
+              <Text className="text-gray-700 font-semibold">تم</Text>
+            </TouchableOpacity>
           </View>
         ) : null}
 
         {showUsed ? (
-          <View className="mt-4 bg-amber-50 border border-amber-100 rounded-2xl px-4 py-4 flex-row items-center">
-            <View className="w-10 h-10 rounded-full bg-amber-100 items-center justify-center">
-              <Ionicons name="alert-circle" size={18} color="#B45309" />
+          <View className="mt-4 bg-amber-50 border border-amber-100 rounded-2xl px-4 py-4">
+            <View className="flex-row items-center">
+              <View className="w-10 h-10 rounded-full bg-amber-100 items-center justify-center">
+                <Ionicons name="alert-circle" size={18} color="#B45309" />
+              </View>
+              <View className="ml-3">
+                <Text className="text-amber-800 font-semibold">
+                  الـ QR مستخدم قبل كده
+                </Text>
+                <Text className="text-amber-700 text-xs mt-1">
+                  اطلب كود جديد او تحقق من الزائر
+                </Text>
+              </View>
             </View>
-            <View className="ml-3">
-              <Text className="text-amber-800 font-semibold">
-                الـ QR مستخدم قبل كده
-              </Text>
-              <Text className="text-amber-700 text-xs mt-1">
-                اطلب كود جديد او تحقق من الزائر
-              </Text>
-            </View>
+            <TouchableOpacity
+              onPress={resetScanView}
+              className="mt-4 rounded-xl bg-amber-100 py-3 items-center"
+              activeOpacity={0.8}
+            >
+              <Text className="text-amber-800 font-semibold">تم</Text>
+            </TouchableOpacity>
           </View>
         ) : null}
 
-        <View className="mt-4">
-          <Text className="text-sm text-gray-500 mb-2">Manual code entry</Text>
+        <View className="mt-4 bg-white border border-gray-100 rounded-2xl px-4 py-4">
+          <Text className="text-sm text-gray-500 mb-3">Manual code entry</Text>
           <View className="flex-row items-center">
             <TextInput
               value={manualCode}
@@ -407,7 +445,7 @@ export default function QRScanScreen() {
         </View>
 
         {lastScanned ? (
-          <View className="mt-4 bg-emerald-50 border border-emerald-100 rounded-xl px-4 py-3">
+          <View className="mt-4 bg-white border border-emerald-100 rounded-2xl px-4 py-3">
             <Text className="text-emerald-700 text-sm font-semibold">
               Last scan: {lastScanned}
             </Text>
