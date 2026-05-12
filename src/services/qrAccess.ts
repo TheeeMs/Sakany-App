@@ -19,6 +19,7 @@ export interface AccessCode {
   code: string;
   qrData: string;
   isSingleUse: boolean;
+  usageCount?: number | null;
   validFrom: string;
   validUntil: string;
   status: AccessCodeStatus;
@@ -30,6 +31,7 @@ export interface CreateAccessCodePayload {
   visitorPhone?: string;
   purpose: VisitPurpose;
   isSingleUse: boolean;
+  usageCount?: number | null;
   validFrom: string; // ISO 8601
   validUntil: string; // ISO 8601
 }
@@ -56,6 +58,7 @@ export interface ScanAccessCodeResponse {
   validUntil: string;
   status: AccessCodeStatus;
   isSingleUse: boolean;
+  usageCount?: number | null;
   usedAt: string | null;
 }
 

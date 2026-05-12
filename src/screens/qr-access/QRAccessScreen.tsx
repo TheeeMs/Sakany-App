@@ -45,7 +45,20 @@ import {
 
 function mapAccessCodeToPass(ac: AccessCode): ActivePass {
   const validUntilDate = new Date(ac.validUntil);
-  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const months = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
   let hours = validUntilDate.getHours();
   const minutes = String(validUntilDate.getMinutes()).padStart(2, "0");
   const ampm = hours >= 12 ? "PM" : "AM";
@@ -57,7 +70,7 @@ function mapAccessCodeToPass(ac: AccessCode): ActivePass {
     name: ac.visitorName,
     type: mapPurposeToType(ac.purpose) as ActivePass["type"],
     usage: ac.isSingleUse ? "Single use" : "Multiple use",
-    usageCount: ac.isSingleUse ? 1 : 2,
+    usageCount: ac.usageCount ?? (ac.isSingleUse ? 1 : 2),
     accessCode: ac.code,
     validUntil: validUntilStr,
     validDate: new Date(ac.validUntil),
@@ -71,8 +84,10 @@ export default function QRAccessScreen() {
   const alert = useCustomAlert();
 
   // Form state
-  const [selectedVisitorType, setSelectedVisitorType] = useState<VisitorType>("guest");
-  const [selectedPassType, setSelectedPassType] = useState<PassType>("one-time");
+  const [selectedVisitorType, setSelectedVisitorType] =
+    useState<VisitorType>("guest");
+  const [selectedPassType, setSelectedPassType] =
+    useState<PassType>("one-time");
   const [visitorName, setVisitorName] = useState("");
   const [date, setDate] = useState<Date | null>(null);
   const [time, setTime] = useState<Date | null>(null);
@@ -128,15 +143,30 @@ export default function QRAccessScreen() {
 
   const handleGenerateQR = async () => {
     if (!visitorName.trim()) {
-      alert.show("Missing Information", "Please enter the visitor name.", [{ text: "OK" }], "warning");
+      alert.show(
+        "Missing Information",
+        "Please enter the visitor name.",
+        [{ text: "OK" }],
+        "warning",
+      );
       return;
     }
     if (!date) {
-      alert.show("Missing Information", "Please select a date.", [{ text: "OK" }], "warning");
+      alert.show(
+        "Missing Information",
+        "Please select a date.",
+        [{ text: "OK" }],
+        "warning",
+      );
       return;
     }
     if (!time) {
-      alert.show("Missing Information", "Please select a time.", [{ text: "OK" }], "warning");
+      alert.show(
+        "Missing Information",
+        "Please select a time.",
+        [{ text: "OK" }],
+        "warning",
+      );
       return;
     }
 
@@ -152,6 +182,7 @@ export default function QRAccessScreen() {
         visitorName: visitorName.trim(),
         purpose: mapVisitorTypeToPurpose(selectedVisitorType),
         isSingleUse: selectedPassType === "one-time",
+        usageCount: selectedPassType === "one-time" ? 1 : usageCount,
         validFrom,
         validUntil,
       });
@@ -167,7 +198,8 @@ export default function QRAccessScreen() {
 
       setShowQRModal(true);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to generate QR code";
+      const msg =
+        err instanceof Error ? err.message : "Failed to generate QR code";
       alert.show("Error", msg, [{ text: "OK" }], "warning");
     } finally {
       setIsGenerating(false);
@@ -180,7 +212,20 @@ export default function QRAccessScreen() {
     if (generatedQRData) {
       const formatValidUntil = () => {
         if (!generatedQRData.date || !generatedQRData.time) return "";
-        const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+        const months = [
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "May",
+          "Jun",
+          "Jul",
+          "Aug",
+          "Sep",
+          "Oct",
+          "Nov",
+          "Dec",
+        ];
         const d = generatedQRData.date;
         const t = generatedQRData.time;
         let hours = t.getHours();
@@ -229,7 +274,13 @@ export default function QRAccessScreen() {
       case "guest":
         return <Ionicons name="person-outline" size={24} color={color} />;
       case "delivery":
-        return <MaterialCommunityIcons name="truck-delivery-outline" size={24} color={color} />;
+        return (
+          <MaterialCommunityIcons
+            name="truck-delivery-outline"
+            size={24}
+            color={color}
+          />
+        );
       case "service":
         return <MaterialCommunityIcons name="tools" size={24} color={color} />;
       case "family":
@@ -278,12 +329,17 @@ Share this code with your visitor for access.
               await revokeAccessCode(pass.id);
               setActivePasses((prev) => prev.filter((p) => p.id !== pass.id));
             } catch {
-              alert.show("Error", "Failed to delete pass. Please try again.", [{ text: "OK" }], "danger");
+              alert.show(
+                "Error",
+                "Failed to delete pass. Please try again.",
+                [{ text: "OK" }],
+                "danger",
+              );
             }
           },
         },
       ],
-      "danger"
+      "danger",
     );
   };
 
@@ -334,7 +390,9 @@ Share this code with your visitor for access.
       >
         {/* Create New QR Section */}
         <View className="mb-6">
-          <Text className="text-lg font-bold text-gray-900 mb-4">Create New QR</Text>
+          <Text className="text-lg font-bold text-gray-900 mb-4">
+            Create New QR
+          </Text>
 
           <Text className="text-sm text-gray-500 mb-3">Visitor Type</Text>
 
@@ -344,7 +402,10 @@ Share this code with your visitor for access.
                 key={item.type}
                 type={item.type}
                 label={item.label}
-                icon={getVisitorIcon(item.type, selectedVisitorType === item.type)}
+                icon={getVisitorIcon(
+                  item.type,
+                  selectedVisitorType === item.type,
+                )}
                 isSelected={selectedVisitorType === item.type}
                 onPress={() => setSelectedVisitorType(item.type)}
               />
@@ -421,12 +482,16 @@ Share this code with your visitor for access.
             {isGenerating ? (
               <>
                 <ActivityIndicator size="small" color="white" />
-                <Text className="text-white text-base font-semibold ml-2">Generating...</Text>
+                <Text className="text-white text-base font-semibold ml-2">
+                  Generating...
+                </Text>
               </>
             ) : (
               <>
                 <MaterialCommunityIcons name="qrcode" size={22} color="white" />
-                <Text className="text-white text-base font-semibold ml-2">Generate QR Code</Text>
+                <Text className="text-white text-base font-semibold ml-2">
+                  Generate QR Code
+                </Text>
               </>
             )}
           </TouchableOpacity>
@@ -434,7 +499,9 @@ Share this code with your visitor for access.
 
         {/* Active Passes Section */}
         <View>
-          <Text className="text-lg font-bold text-gray-900 mb-4">Active Passes</Text>
+          <Text className="text-lg font-bold text-gray-900 mb-4">
+            Active Passes
+          </Text>
 
           {isLoadingPasses ? (
             <View style={{ paddingVertical: 32, alignItems: "center" }}>
@@ -442,7 +509,11 @@ Share this code with your visitor for access.
             </View>
           ) : activePasses.length === 0 ? (
             <View style={{ paddingVertical: 32, alignItems: "center" }}>
-              <MaterialCommunityIcons name="qrcode-remove" size={48} color="#D1D5DB" />
+              <MaterialCommunityIcons
+                name="qrcode-remove"
+                size={48}
+                color="#D1D5DB"
+              />
               <Text style={{ color: "#9CA3AF", marginTop: 12, fontSize: 14 }}>
                 No active passes yet
               </Text>
