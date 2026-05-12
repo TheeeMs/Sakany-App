@@ -2,7 +2,12 @@ import { api } from "./api";
 
 // ─── Types matching backend ─────────────────────────────────────────────────
 
-export type VisitPurpose = "GUEST" | "DELIVERY" | "SERVICE" | "FAMILY" | "OTHER";
+export type VisitPurpose =
+  | "GUEST"
+  | "DELIVERY"
+  | "SERVICE"
+  | "FAMILY"
+  | "OTHER";
 export type AccessCodeStatus = "ACTIVE" | "USED" | "EXPIRED" | "REVOKED";
 
 export interface AccessCode {
@@ -14,6 +19,7 @@ export interface AccessCode {
   code: string;
   qrData: string;
   isSingleUse: boolean;
+  usageCount?: number | null;
   validFrom: string;
   validUntil: string;
   status: AccessCodeStatus;
@@ -25,8 +31,9 @@ export interface CreateAccessCodePayload {
   visitorPhone?: string;
   purpose: VisitPurpose;
   isSingleUse: boolean;
-  validFrom: string;   // ISO 8601
-  validUntil: string;  // ISO 8601
+  usageCount?: number | null;
+  validFrom: string; // ISO 8601
+  validUntil: string; // ISO 8601
 }
 
 export interface VisitLog {
@@ -39,10 +46,28 @@ export interface VisitLog {
   gateNumber: string | null;
 }
 
+export interface ScanAccessCodePayload {
+  gateNumber?: string | null;
+}
+
+export interface ScanAccessCodeResponse {
+  visitLogId: string;
+  accessCodeId: string;
+  visitorName: string;
+  purpose: VisitPurpose;
+  validUntil: string;
+  status: AccessCodeStatus;
+  isSingleUse: boolean;
+  usageCount?: number | null;
+  usedAt: string | null;
+}
+
 // ─── API Functions ──────────────────────────────────────────────────────────
 
 /** Create a new QR access code */
-export async function createAccessCode(payload: CreateAccessCodePayload): Promise<AccessCode> {
+export async function createAccessCode(
+  payload: CreateAccessCodePayload,
+): Promise<AccessCode> {
   const { data } = await api.post<AccessCode>("/access/codes", payload);
   return data;
 }
@@ -68,12 +93,15 @@ export async function revokeAccessCode(id: string): Promise<void> {
 export async function reactivateAccessCode(
   codeId: string,
   validFrom: string,
-  validUntil: string
+  validUntil: string,
 ): Promise<AccessCode> {
-  const { data } = await api.post<AccessCode>(`/access/codes/${codeId}/reactivate`, {
-    validFrom,
-    validUntil,
-  });
+  const { data } = await api.post<AccessCode>(
+    `/access/codes/${codeId}/reactivate`,
+    {
+      validFrom,
+      validUntil,
+    },
+  );
   return data;
 }
 
@@ -83,11 +111,27 @@ export async function getMyVisitLogs(): Promise<VisitLog[]> {
   return data;
 }
 
+/** Scan/use an access code (security guard) */
+export async function scanAccessCode(
+  code: string,
+  payload: ScanAccessCodePayload = {},
+): Promise<ScanAccessCodeResponse> {
+  const body = {
+    code,
+    gateNumber: payload.gateNumber ?? null,
+  };
+  const { data } = await api.post<ScanAccessCodeResponse>(
+    `/access/codes/${code}/scan`,
+    body,
+  );
+  return data;
+}
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 /** Map frontend VisitorType → backend VisitPurpose */
 export function mapVisitorTypeToPurpose(
-  type: "guest" | "delivery" | "service" | "family"
+  type: "guest" | "delivery" | "service" | "family",
 ): VisitPurpose {
   const map: Record<string, VisitPurpose> = {
     guest: "GUEST",
@@ -100,7 +144,7 @@ export function mapVisitorTypeToPurpose(
 
 /** Map backend AccessCodeStatus → frontend display status */
 export function mapStatusToDisplay(
-  status: AccessCodeStatus
+  status: AccessCodeStatus,
 ): "Active" | "Used" | "Expired" {
   if (status === "ACTIVE") return "Active";
   if (status === "USED") return "Used";

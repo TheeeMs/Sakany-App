@@ -7,6 +7,7 @@ export { default as AboutScreen } from "./about/AboutScreen";
 // QR Access
 export { default as QRAccessScreen } from "./qr-access/QRAccessScreen";
 export { default as QRHistoryScreen } from "./qr-access/QRHistoryScreen";
+export { default as QRScanScreen } from "./qr-access/QRScanScreen";
 
 // Missing & Found
 export { default as MissingFoundScreen } from "./missing-found/MissingFoundScreen";
@@ -18,6 +19,9 @@ export { default as MaintenanceScreen } from "./maintenance/MaintenanceScreen";
 export { default as RequestDetailsScreen } from "./maintenance/RequestDetailsScreen";
 export { default as OtherRequestScreen } from "./maintenance/OtherRequestScreen";
 export { default as MaintenanceHistoryScreen } from "./maintenance/MaintenanceHistoryScreen";
+export { default as TechnicianJobsScreen } from "./maintenance/technician/TechnicianJobsScreen";
+export { default as TechnicianHistoryScreen } from "./maintenance/technician/TechnicianHistoryScreen";
+export { default as TechnicianRequestDetailsScreen } from "./maintenance/technician/TechnicianRequestDetailsScreen";
 
 // Payment
 export { default as PaymentScreen } from "./payment/PaymentScreen";

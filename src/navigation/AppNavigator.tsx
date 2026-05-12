@@ -9,6 +9,7 @@ import {
   AboutScreen,
   QRAccessScreen,
   QRHistoryScreen,
+  QRScanScreen,
   MissingFoundScreen,
   ReportDetailsScreen,
   CreateReportScreen,
@@ -20,6 +21,9 @@ import {
   RequestDetailsScreen,
   OtherRequestScreen,
   MaintenanceHistoryScreen,
+  TechnicianJobsScreen,
+  TechnicianHistoryScreen,
+  TechnicianRequestDetailsScreen,
   PaymentScreen,
   PaymentDetailsScreen,
   PaymentStatisticsScreen,
@@ -43,6 +47,7 @@ export type RootStackParamList = {
   About: undefined;
   QRAccess: undefined;
   QRHistory: undefined;
+  SecurityScan: undefined;
   MissingFound: undefined;
   ReportDetails: { item: MissingFoundItem };
   CreateReport: undefined;
@@ -56,6 +61,8 @@ export type RootStackParamList = {
   RequestDetails: { category?: string } | undefined;
   OtherRequest: { category?: string } | undefined;
   MaintenanceHistory: undefined;
+  TechnicianMain: undefined;
+  TechnicianRequestDetails: { requestId: string };
   PaymentDetails: { payment: Payment };
   PaymentStatistics: undefined;
   Notifications: undefined;
@@ -68,8 +75,15 @@ export type MainTabParamList = {
   Profile: undefined;
 };
 
+export type TechnicianTabParamList = {
+  TechJobs: undefined;
+  TechHistory: undefined;
+  Profile: undefined;
+};
+
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
+const TechnicianTab = createBottomTabNavigator<TechnicianTabParamList>();
 
 function MainTabs() {
   return (
@@ -87,11 +101,39 @@ function MainTabs() {
   );
 }
 
+function TechnicianTabs() {
+  return (
+    <TechnicianTab.Navigator
+      tabBar={(props) => <BottomTabBar {...props} />}
+      screenOptions={{
+        headerShown: false,
+      }}
+    >
+      <TechnicianTab.Screen name="TechJobs" component={TechnicianJobsScreen} />
+      <TechnicianTab.Screen
+        name="TechHistory"
+        component={TechnicianHistoryScreen}
+      />
+      <TechnicianTab.Screen name="Profile" component={ProfileScreen} />
+    </TechnicianTab.Navigator>
+  );
+}
+
 export default function AppNavigator() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const userRole = useAuthStore((state) => state.user?.role);
+  const isSecurityGuard = userRole === "SECURITY_GUARD";
+  const isTechnician = userRole === "TECHNICIAN";
+  const initialRouteName = !isAuthenticated
+    ? "GetStarted"
+    : isSecurityGuard
+      ? "SecurityScan"
+      : isTechnician
+        ? "TechnicianMain"
+        : "Main";
 
   return (
-    <Stack.Navigator initialRouteName={isAuthenticated ? "Main" : "GetStarted"}>
+    <Stack.Navigator initialRouteName={initialRouteName}>
       {!isAuthenticated ? (
         <>
           <Stack.Screen
@@ -112,6 +154,27 @@ export default function AppNavigator() {
           <Stack.Screen
             name="Register"
             component={RegisterScreen}
+            options={{ headerShown: false }}
+          />
+        </>
+      ) : isSecurityGuard ? (
+        <>
+          <Stack.Screen
+            name="SecurityScan"
+            component={QRScanScreen}
+            options={{ headerShown: false }}
+          />
+        </>
+      ) : isTechnician ? (
+        <>
+          <Stack.Screen
+            name="TechnicianMain"
+            component={TechnicianTabs}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="TechnicianRequestDetails"
+            component={TechnicianRequestDetailsScreen}
             options={{ headerShown: false }}
           />
         </>
